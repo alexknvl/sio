@@ -45,7 +45,8 @@ lazy val commonSettings = List(
 
 lazy val core = (project in file("core")).
   settings(name := "sio-core").
-  settings(commonSettings: _*)
+  settings(commonSettings: _*).
+  settings(addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full))
 
 lazy val ioref = (project in file("ioref")).
   settings(name := "sio-ioref").

@@ -1,10 +1,10 @@
 package sio.core
 
-import cats.{MonadError, Monad}
-
 object instances {
-  implicit val instance: Monad[IO] with MonadError[IO, Throwable] = new Monad[IO] with MonadError[IO, Throwable] {
+  implicit val instance: MonadIO[IO] = new MonadIO[IO] {
     override def pure[A](x: A): IO[A] = IO.pure(x)
+    override def capture[A](a: => A): IO[A] = IO.capture(a)
+
     override def raiseError[A](e: Throwable): IO[A] = IO.raiseError(e)
     override def map[A, B](fa: IO[A])(f: A => B): IO[B] = fa.map(f)
     override def flatMap[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = fa.flatMap(f)

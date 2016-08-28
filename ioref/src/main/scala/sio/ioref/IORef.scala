@@ -3,7 +3,7 @@ package sio.ioref
 import sio.core.IO
 
 object `package` {
-  def newIORef[A](a: => A): IO[IORef[A]] = IO.capture(new IORef[A] {
+  def newIORef[A](a: => A): IO[IORef[A]] = IO(new IORef[A] {
     override var value: A = a
   })
 }
@@ -11,7 +11,7 @@ object `package` {
 sealed abstract class IORef[A] {
   var value: A
 
-  def read: IO[A] = IO.capture(value)
-  def write(a: => A): IO[Unit] = IO.capture { value = a }
-  def modify(f: A => A): IO[A] = IO.capture { value = f(value); value }
+  def read: IO[A] = IO { value }
+  def write(a: => A): IO[Unit] = IO { value = a }
+  def modify(f: A => A): IO[A] = IO { value = f(value); value }
 }
