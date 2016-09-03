@@ -3,7 +3,7 @@ package sio.core
 object instances {
   implicit val instance: MonadIO[IO] = new MonadIO[IO] {
     override def pure[A](x: A): IO[A] = IO.pure(x)
-    override def capture[A](a: => A): IO[A] = IO.capture(a)
+    override def capture[A](a: => A): IO[A] = IO(a)
 
     override def raiseError[A](e: Throwable): IO[A] = IO.raiseError(e)
     override def map[A, B](fa: IO[A])(f: A => B): IO[B] = fa.map(f)
