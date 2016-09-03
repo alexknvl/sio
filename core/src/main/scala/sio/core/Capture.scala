@@ -1,6 +1,5 @@
 package sio.core
 
-import cats.Monad
 import simulacrum.typeclass
 
 @typeclass trait Capture[F[_]] {
