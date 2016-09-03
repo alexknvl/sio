@@ -3,6 +3,7 @@ package sio.ioref
 import sio.core.IO
 
 object `package` {
+  @SuppressWarnings(Array("org.wartremover.warts.Var"))
   def newIORef[A](a: => A): IO[IORef[A]] = IO(new IORef[A] {
     override var value: A = a
   })
