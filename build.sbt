@@ -23,6 +23,7 @@ lazy val scalaStdDependencies =
 lazy val commonSettings = List(
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.7.1"),
   addCompilerPlugin("com.milessabin" % "si2712fix-plugin_2.11.8" % "1.2.0"),
+  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   organization := "com.alexknvl",
   version := "0.1-SNAPSHOT",
   scalaVersion := "2.11.8",
@@ -45,8 +46,12 @@ lazy val commonSettings = List(
 
 lazy val core = (project in file("core")).
   settings(name := "sio-core").
+  settings(commonSettings: _*)
+
+lazy val eff = (project in file("eff")).
+  settings(name := "sio-eff").
   settings(commonSettings: _*).
-  settings(addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full))
+  dependsOn(core)
 
 lazy val ioref = (project in file("ioref")).
   settings(name := "sio-ioref").
@@ -62,13 +67,17 @@ lazy val macros = (project in file("macros")).
   settings(name := "sio-macros").
   settings(commonSettings: _*).
   settings(
-    addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full),
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
     libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
     libraryDependencies += "org.typelevel" %% "macro-compat" % "1.1.1").
   dependsOn(core)
 
+lazy val example = (project in file("example")).
+  settings(name := "sio-example").
+  settings(commonSettings: _*).
+  dependsOn(core, eff, ioref, teletype)
+
 lazy val root = (project in file(".")).
   settings(name := "sio").
   settings(commonSettings: _*).
-  aggregate(core, ioref, teletype)
+  aggregate(core, eff, ioref, teletype, example)
