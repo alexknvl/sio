@@ -38,6 +38,8 @@ object dmz {
     final case class Handle(f: Throwable => Thunk) extends Op
   }
 
+  val unit: IO[Unit] = RealIO(Vector.empty[Op])
+
   def pure[A](x: A): IO[A] =
     RealIO(Vector(Op.Map(Val.castK2((u: Unit) => x))))
   def capture[A](x: => A): IO[A] =

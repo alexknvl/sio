@@ -48,13 +48,18 @@ lazy val core = (project in file("core")).
   settings(name := "sio-core").
   settings(commonSettings: _*)
 
-lazy val eff = (project in file("eff")).
-  settings(name := "sio-eff").
+lazy val ioref = (project in file("ioref")).
+  settings(name := "sio-ioref").
   settings(commonSettings: _*).
   dependsOn(core)
 
-lazy val ioref = (project in file("ioref")).
-  settings(name := "sio-ioref").
+lazy val regions = (project in file("regions")).
+  settings(name := "sio-regions").
+  settings(commonSettings: _*).
+  dependsOn(core, ioref)
+
+lazy val eff = (project in file("eff")).
+  settings(name := "sio-eff").
   settings(commonSettings: _*).
   dependsOn(core)
 
@@ -75,9 +80,9 @@ lazy val macros = (project in file("macros")).
 lazy val example = (project in file("example")).
   settings(name := "sio-example").
   settings(commonSettings: _*).
-  dependsOn(core, eff, ioref, teletype)
+  dependsOn(core, eff, ioref, teletype, regions)
 
 lazy val root = (project in file(".")).
   settings(name := "sio").
   settings(commonSettings: _*).
-  aggregate(core, eff, ioref, teletype, example)
+  aggregate(core, eff, ioref, teletype, regions, example)
