@@ -1,8 +1,13 @@
-import cats.instances.list._
-import cats.syntax.traverse._
+import sio.core.IO
+import sio.teletype._
 
 object App {
-  def main(args: Array[String]): Unit = List(
-    core.run, eff.run.runEff, free.main
-  ).sequence.map(x => ()).unsafeRun()
+  def main(args: Array[String]): Unit = Map(
+    "core"  -> core.run,
+    "eff"   -> eff.run.runEff,
+    "free"  -> free.main,
+    "ioref" -> ioref.run
+  ).foldLeft(IO.unit) { case (io, (name, main)) =>
+      io >> putStrLn(s"Running $name") >> main >> putStrLn("")
+  }.unsafeRun()
 }
