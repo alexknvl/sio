@@ -15,4 +15,9 @@ sealed abstract class IORef[A] {
   def read: IO[A] = IO { value }
   def write(a: => A): IO[Unit] = IO { value = a }
   def modify(f: A => A): IO[A] = IO { value = f(value); value }
+
+  override def toString: String = {
+    val addr = super.toString.dropWhile(_ != '@').tail
+    s"IORef[$addr, $value]"
+  }
 }
