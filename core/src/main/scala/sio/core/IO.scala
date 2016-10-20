@@ -10,56 +10,56 @@ sealed abstract class IO[A] extends Product with Serializable {
   def unsafeAttempt(): Xor[Throwable, A]
   def unsafeRun(): A
 
-  def ensure(error: => Throwable)(predicate: A => Boolean): IO[A] =
+  final def ensure(error: => Throwable)(predicate: A => Boolean): IO[A] =
     flatMap(a => if (predicate(a)) IO.pure(a) else IO.raiseError(error))
 
-  def attempt: IO[Xor[Throwable, A]] =
+  final def attempt: IO[Xor[Throwable, A]] =
     map(Xor.right[Throwable, A]).handleErrorWith(e => IO.pure(Xor.left[Throwable, A](e)))
 
-  def recover(pf: PartialFunction[Throwable, A]): IO[A] =
+  final def recover(pf: PartialFunction[Throwable, A]): IO[A] =
     handleErrorWith(e => (pf andThen IO.pure) applyOrElse(e, IO.raiseError))
 
-  def recoverWith(pf: PartialFunction[Throwable, IO[A]]): IO[A] =
+  final def recoverWith(pf: PartialFunction[Throwable, IO[A]]): IO[A] =
     handleErrorWith(e => pf applyOrElse(e, IO.raiseError))
 
-  def >>[B](next: IO[B]): IO[B] = flatMap(_ => next)
-  def *>[B](next: IO[B]): IO[B] = flatMap(_ => next)
-  def <*[B](next: IO[B]): IO[A] = flatMap(a => next.map(_ => a))
+  final def >>[B](next: IO[B]): IO[B] = flatMap(_ => next)
+  final def *>[B](next: IO[B]): IO[B] = flatMap(_ => next)
+  final def <*[B](next: IO[B]): IO[A] = flatMap(a => next.map(_ => a))
 
-  def forever: IO[Unit] = flatMap[Unit](_ => forever)
+  final def forever: IO[Unit] = flatMap[Unit](_ => forever)
 
   /**
     * Like "finally", but only performs the final action if there was an exception.
     */
-  def onException[B](action: IO[B]): IO[A] =
+  final def onException[B](action: IO[B]): IO[A] =
     handleErrorWith(e => action.flatMap(_ => IO.raiseError[A](e)))
 
   /**
     * Applies the "during" action, calling "after" regardless of whether there was an exception.
     * All exceptions are rethrown. Generalizes try/finally.
     */
-  def bracket[B, C](after: A => IO[B])(during: A => IO[C]): IO[C] =
+  final def bracket[B, C](after: A => IO[B])(during: A => IO[C]): IO[C] =
     flatMap(a => during(a).onException(after(a)) <* after(a))
 
   /**
     * Like "bracket", but takes only a computation to run afterward. Generalizes "finally".
     */
-  def ensuring[B](sequel: IO[B]): IO[A] =
+  final def ensuring[B](sequel: IO[B]): IO[A] =
     onException(sequel) <* sequel
 
   /**
     * A variant of "bracket" where the return value of this computation is not needed.
     */
-  def bracket_[B, C](after: IO[B])(during: IO[C]): IO[C] =
+  final def bracket_[B, C](after: IO[B])(during: IO[C]): IO[C] =
     flatMap(a => during.onException(after) <* after)
 
   /**
     * A variant of "bracket" that performs the final action only if there was an error.
     */
-  def bracketOnError[B, C](after: A => IO[B])(during: A => IO[C]): IO[C] =
+  final def bracketOnError[B, C](after: A => IO[B])(during: A => IO[C]): IO[C] =
     flatMap(a => during(a).onException(after(a)))
 
-  def liftIO[F[_]](implicit F: LiftIO[F]): F[A] = F.liftIO(this)
+  final def liftIO[F[_]](implicit F: LiftIO[F]): F[A] = F.liftIO(this)
 }
 
 @SuppressWarnings(Array("org.wartremover.warts.LeakingSealed"))

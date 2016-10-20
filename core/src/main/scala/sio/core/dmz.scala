@@ -1,8 +1,6 @@
 package sio.core
 
 import cats.data.Xor
-import scala.collection.mutable
-import scala.util.Try
 import scala.util.control.NonFatal
 
 @SuppressWarnings(Array(
@@ -40,11 +38,11 @@ object dmz {
 
   val unit: IO[Unit] = RealIO(Vector.empty[Op])
 
-  def pure[A](x: A): IO[A] =
+  def pure[A](x: A): RealIO[A] =
     RealIO(Vector(Op.Map(Val.castK2((u: Unit) => x))))
-  def capture[A](x: => A): IO[A] =
+  def capture[A](x: => A): RealIO[A] =
     RealIO(Vector(Op.Map(Val.castK2((u: Unit) => x))))
-  def raiseError[A](e: Throwable): IO[A] =
+  def raiseError[A](e: Throwable): RealIO[A] =
     RealIO(Vector(Op.Map(Val.castK2((u: Unit) => (throw e) : Val))))
 
   def getIOThunk[A](io: IO[A]): Thunk =
