@@ -4,14 +4,10 @@ import java.io._
 import java.util.zip.{GZIPOutputStream, GZIPInputStream}
 
 import cats.MonadError
-import io.iteratee.files.{SuspendableFileModule, FileModule}
 import io.iteratee.internal.Step
 import io.iteratee.{Iteratee, Module, Enumerator}
 import sio.core.IO
 import sio.iteratee.IOModule
-import sio.iteratee.files.IOFileModule
-
-import scala.util.control.NonFatal
 
 trait GZipModule[F[_]] {
   def readLines(file: File): Enumerator[F, String]
