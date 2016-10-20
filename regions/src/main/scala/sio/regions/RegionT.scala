@@ -1,9 +1,11 @@
 package sio.regions
 
-import cats.{FlatMap, Monad}
+import cats.Monad
 import cats.data.{ReaderT, Kleisli}
 import cats.syntax.traverse._
 import cats.syntax.foldable._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
 import cats.instances.list._
 import sio.core.{MonadIO, IO}
 import sio.ioref.IORef
@@ -24,7 +26,9 @@ final case class RegionT[S, P[_], A](run: ReaderT[P, IORef[List[RefCountedFinali
 object RegionT {
   def readerTMonad[M[_]](implicit M: Monad[M]) = Monad[ReaderT[M, IORef[List[RefCountedFinalizer]], ?]]
 
-  def regionTMonad[S, M[_]](implicit M: MonadIO[M]): Monad[RegionT[S, M, ?]] = new MonadIO[RegionT[S, M, ?]] {
+  def liftIO[S, M[_], A](a: IO[A])(implicit M: MonadIO[M]): RegionT[S, M, A] = RegionT(ReaderT(_ => M.liftIO(a)))
+
+  implicit def regionTMonad[S, M[_]](implicit M: MonadIO[M]): MonadIO[RegionT[S, M, ?]] = new MonadIO[RegionT[S, M, ?]] {
     val RM = readerTMonad[M]
 
     override def pure[A](x: A): RegionT[S, M, A] =
@@ -47,6 +51,10 @@ object `package` {
   trait Forall[F[_]] {
     def apply[A]: F[A]
   }
+
+  /**
+    * Forall[λ[X => (M[X] => Base[M[X]])]]
+    */
   trait RunInBase[M[_], Base[_]] {
     def apply[A](x: M[A]): Base[M[A]]
   }
@@ -57,22 +65,32 @@ object `package` {
   }
 
   def idLiftControl[M[_], A](f: RunInBase[M, M] => M[A])(implicit M: Monad[M]): M[A] =
-    f(new RunInBase[M, M] {
-      def apply[B](x: M[B]): M[M[B]] = M.pure(x)
-    })
+    f(new RunInBase[M, M] { def apply[B](x: M[B]): M[M[B]] = x.map(M.pure) })
+
+  @SuppressWarnings(Array("org.wartremover.warts.NoNeedForMonad"))
+  private[this] def addFinalizer[F[_]](finalizersRef: IORef[List[RefCountedFinalizer]], finalizer: IO[Unit]): IO[FinalizerHandle[F]] =
+    for {
+      countRef <- newIORef[Int](1)
+      h = RefCountedFinalizer(finalizer, countRef)
+      _ <- finalizersRef.modify(h :: _)
+    } yield FinalizerHandle[F](h)
+
+  private[this] def exitBlock(finalizersRef: IORef[List[RefCountedFinalizer]]): IO[Unit] =
+    finalizersRef.read.flatMap { finalizers =>
+        finalizers.traverse_ { finalizer =>
+          finalizer.refCount.modify(_ - 1)
+            .flatMap(count => if (count == 0) finalizer.run else IO.unit)
+        }
+    }
 
   /**
     * Register a finalizer in the current region. When the region terminates,
     * all registered finalizers will be performed if they're not duplicated to a parent region.
     */
-  @SuppressWarnings(Array("org.wartremover.warts.NoNeedForMonad"))
-  def onExit[S, P[_] : MonadIO](finalizer: IO[Unit]): RegionT[S, P, FinalizerHandle[RegionT[S, P, ?]]] = {
-    RegionT(Kleisli[P, IORef[List[RefCountedFinalizer]], FinalizerHandle[RegionT[S, P, ?]]](finalizersRef => (for {
-      refCntIORef <- newIORef[Int](1)
-      h = RefCountedFinalizer(finalizer, refCntIORef)
-      _ <- finalizersRef.modify(h :: _)
-    } yield FinalizerHandle[RegionT[S, P, ?]](h)).liftIO[P]))
-  }
+  def onExit[S, P[_] : MonadIO](finalizer: IO[Unit]): RegionT[S, P, FinalizerHandle[RegionT[S, P, ?]]] =
+    RegionT(Kleisli[P, IORef[List[RefCountedFinalizer]], FinalizerHandle[RegionT[S, P, ?]]]{ finalizersRef =>
+      addFinalizer[RegionT[S, P, ?]](finalizersRef, finalizer).liftIO[P]
+    })
 
   /**
     * Execute a region inside its parent region P. All resources which have been opened in the given
@@ -82,15 +100,6 @@ object `package` {
     * on exit if they haven't been duplicated themselves.
     * The Forall quantifier prevents resources from being returned by this function.
     */
-  def runRegionT[P[_] : MonadControlIO, A](r: Forall[RegionT[?, P, A]]): P[A] = {
-    def after(finalizersRef: IORef[List[RefCountedFinalizer]]) =
-      finalizersRef.read.flatMap { finalizers =>
-        finalizers.traverse_ {
-          finalizer => finalizer.refCount.modify(_ - 1)
-            .flatMap(count => if (count == 0) finalizer.run else IO.unit)
-        }
-      }
-
-    newIORef(List.empty[RefCountedFinalizer]).bracketIO(after)(s => r.apply.run.apply(s))
-  }
+  def runRegionT[P[_], A](r: Forall[RegionT[?, P, A]])(implicit P: MonadControlIO[P]): P[A] =
+    newIORef(List.empty[RefCountedFinalizer]).bracketIO(exitBlock)(r.apply.run.apply)
 }
