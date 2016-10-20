@@ -72,6 +72,8 @@ object IO {
   def pure[A](x: A): IO[A] = dmz.pure(x)
   def raiseError[A](e: Throwable): IO[A] = dmz.raiseError(e)
 
+  def trace(s: String): IO[Unit] = IO { System.err.println(s) }
+
   implicit val instance: MonadIO[IO] = new MonadIO[IO] {
     override def pure[A](x: A): IO[A] = IO.pure(x)
     override def capture[A](a: => A): IO[A] = IO(a)
