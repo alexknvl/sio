@@ -6,10 +6,21 @@ import cats.syntax.either._
 import scala.util.Try
 
 sealed abstract class IO[A] extends Product with Serializable {
+  /**
+    * This is the "back door" into the IO monad, allowing IO computation
+    * to be performed at any time. For this to be safe, the IO computation
+    * should be free of side effects and independent of its environment.
+    *
+    * @return a value of type `A`.
+    * @see [[unsafeAttempt]] to catch all non-fatal exceptions.
+    * @see [[unsafeTry]] to catch all non-fatal exceptions and turns result into [[Try]].
+    */
   def unsafeRun(): A
+
   def unsafeAttempt(): Either[Throwable, A]
 
   def map[B](f: A => B): IO[B]
+
   def flatMap[B](f: A => IO[B]): IO[B]
 
   final def unsafeTry(): Try[A] = unsafeAttempt().toTry
@@ -131,6 +142,9 @@ sealed abstract class IO[A] extends Product with Serializable {
   final def bracketOnError[B, C](after: A => IO[B])(during: A => IO[C]): IO[C] =
     flatMap(a => during(a).onException(after(a)))
 
+  /**
+    * Lift this action to a given IO-like monad.
+    */
   final def liftIO[F[_]](implicit F: LiftIO[F]): F[A] = F.liftIO(this)
 }
 
