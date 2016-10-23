@@ -93,7 +93,11 @@ sealed abstract class IO[A] extends Product with Serializable {
     */
   final def <*[B](next: IO[B]): IO[A] = flatMap(a => next.map(_ => a))
 
-  final def forever: IO[Unit] = flatMap[Unit](_ => forever)
+  /**
+    * forever repeats the action infinitely.
+    * @return does not return under normal circumstances
+    */
+  final def forever: IO[Nothing] = flatMap[Nothing](_ => forever)
 
   /**
     * Like "finally", but only performs the final action if there was an exception.
