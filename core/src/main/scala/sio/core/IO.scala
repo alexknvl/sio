@@ -3,12 +3,16 @@ package sio.core
 import cats.data.EitherT
 import cats.syntax.either._
 
+import scala.util.Try
+
 sealed abstract class IO[A] extends Product with Serializable {
-  def unsafeAttempt(): Either[Throwable, A]
   def unsafeRun(): A
+  def unsafeAttempt(): Either[Throwable, A]
 
   def map[B](f: A => B): IO[B]
   def flatMap[B](f: A => IO[B]): IO[B]
+
+  final def unsafeTry(): Try[A] = unsafeAttempt().toTry
 
   /**
     * Handle any error, potentially recovering from it, by mapping it to an
@@ -16,7 +20,6 @@ sealed abstract class IO[A] extends Product with Serializable {
     *
     * @see [[handleError]] to handle any error by simply mapping it to an `A`
     * value instead of an `IO[A]`.
-    *
     * @see [[recoverWith]] to recover from only certain errors.
     */
   def handleErrorWith(f: Throwable => IO[A]): IO[A]
@@ -26,7 +29,6 @@ sealed abstract class IO[A] extends Product with Serializable {
     *
     * @see [[handleErrorWith]] to map to an `IO[A]` value instead of simply an
     * `A` value.
-    *
     * @see [[recover]] to only recover from certain errors.
     */
   final def handleError(f: Throwable => A): IO[A] =
@@ -58,7 +60,6 @@ sealed abstract class IO[A] extends Product with Serializable {
     * Recover from certain errors by mapping them to an `A` value.
     *
     * @see [[handleError]] to handle any/all errors.
-    *
     * @see [[recoverWith]] to recover from certain errors by mapping them to
     * `IO[A]` values.
     */
@@ -69,7 +70,6 @@ sealed abstract class IO[A] extends Product with Serializable {
     * Recover from certain errors by mapping them to an `IO[A]` value.
     *
     * @see [[handleErrorWith]] to handle any/all errors.
-    *
     * @see [[recover]] to recover from certain errors by mapping them to `A`
     * values.
     */
@@ -95,6 +95,7 @@ sealed abstract class IO[A] extends Product with Serializable {
 
   /**
     * forever repeats the action infinitely.
+    *
     * @return does not return under normal circumstances
     */
   final def forever: IO[Nothing] = flatMap[Nothing](_ => forever)
