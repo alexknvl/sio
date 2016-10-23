@@ -1,7 +1,7 @@
 package sio.eff
 
-import cats.data.Xor
 import sio.core.IO
+import cats.syntax.either._
 import ops.{Intersection, Union}
 
 import Effect.{ !, !! }
@@ -19,8 +19,8 @@ final class EffIO[E <: !!, A] private (val runEff: IO[A]) extends AnyVal {
   def ensure(error: => Throwable)(predicate: A => Boolean): EffIO[E, A] =
     new EffIO(runEff.flatMap(a => if (predicate(a)) IO.pure(a) else IO.raiseError(error)))
 
-  def attempt: EffIO[E, Xor[Throwable, A]] =
-    new EffIO(runEff.map(Xor.right[Throwable, A]).handleErrorWith(e => IO.pure(Xor.left(e))))
+  def attempt: EffIO[E, Either[Throwable, A]] =
+    new EffIO(runEff.map(Either.right[Throwable, A]).handleErrorWith(e => IO.pure(Either.left(e))))
 
   def recover(pf: PartialFunction[Throwable, A]): EffIO[E, A] =
     new EffIO(runEff.handleErrorWith(e => (pf andThen IO.pure) applyOrElse(e, IO.raiseError)))

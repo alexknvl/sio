@@ -1,6 +1,7 @@
 package sio.core
 
 import cats.data.Xor
+import cats.syntax.either._
 import scala.util.control.NonFatal
 
 @SuppressWarnings(Array(
@@ -14,7 +15,7 @@ object dmz {
   type Val = Any with ({ type Tag = Any })
   object Val {
     val unit = cast(())
-    val xorUnit = Xor.right[Throwable, Val](Val.unit)
+    val xorUnit = Either.right[Throwable, Val](Val.unit)
 
     def cast[A](a: A): Val = a.asInstanceOf[Val]
     def castK2[F[_, _], A, B](a: F[A, B]): F[Val, Val] = a.asInstanceOf[F[Val, Val]]
@@ -56,13 +57,13 @@ object dmz {
     def handleErrorWith(f: Throwable => IO[A]): IO[A] =
       RealIO(thunk :+ Op.Handle(f andThen getIOThunk))
 
-    override def unsafeAttempt(): Xor[Throwable, A] = unsafeAttemptIO(this)
+    override def unsafeAttempt(): Either[Throwable, A] = unsafeAttemptIO(this)
     override def unsafeRun(): A = unsafePerformIO(this)
   }
 
-  def unsafeAttemptIO[A](io: RealIO[A]): Xor[Throwable, A] = {
+  def unsafeAttemptIO[A](io: RealIO[A]): Either[Throwable, A] = {
     val buffer = io.thunk.toBuffer
-    var value: Xor[Throwable, Val] = Val.xorUnit
+    var value: Either[Throwable, Val] = Val.xorUnit
 
     while (buffer.nonEmpty) {
       try {
@@ -84,7 +85,7 @@ object dmz {
           }
         }
       } catch {
-        case NonFatal(e) => value = Xor.left[Throwable, Val](e)
+        case NonFatal(e) => value = Either.left[Throwable, Val](e)
       }
     }
 

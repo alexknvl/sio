@@ -1,29 +1,96 @@
 package sio.core
 
-import cats.data.Xor
+import cats.data.EitherT
+import cats.syntax.either._
 
 sealed abstract class IO[A] extends Product with Serializable {
-  def map[B](f: A => B): IO[B]
-  def flatMap[B](f: A => IO[B]): IO[B]
-  def handleErrorWith(f: Throwable => IO[A]): IO[A]
-
-  def unsafeAttempt(): Xor[Throwable, A]
+  def unsafeAttempt(): Either[Throwable, A]
   def unsafeRun(): A
 
+  def map[B](f: A => B): IO[B]
+  def flatMap[B](f: A => IO[B]): IO[B]
+
+  /**
+    * Handle any error, potentially recovering from it, by mapping it to an
+    * `F[A]` value.
+    *
+    * @see [[handleError]] to handle any error by simply mapping it to an `A`
+    * value instead of an `F[A]`.
+    *
+    * @see [[recoverWith]] to recover from only certain errors.
+    */
+  def handleErrorWith(f: Throwable => IO[A]): IO[A]
+
+  /**
+    * Handle any error, by mapping it to an `A` value.
+    *
+    * @see [[handleErrorWith]] to map to an `F[A]` value instead of simply an
+    * `A` value.
+    *
+    * @see [[recover]] to only recover from certain errors.
+    */
+  final def handleError(f: Throwable => A): IO[A] =
+    handleErrorWith(f andThen IO.pure)
+
+  /**
+    * Turns a successful value into an error if it does not satisfy a given predicate.
+    */
   final def ensure(error: => Throwable)(predicate: A => Boolean): IO[A] =
     flatMap(a => if (predicate(a)) IO.pure(a) else IO.raiseError(error))
 
-  final def attempt: IO[Xor[Throwable, A]] =
-    map(Xor.right[Throwable, A]).handleErrorWith(e => IO.pure(Xor.left[Throwable, A](e)))
+  /**
+    * Handle errors by turning them into [[scala.util.Either]] values.
+    *
+    * If there is no error, then an `scala.util.Right` value will be returned instead.
+    *
+    * All non-fatal errors should be handled by this method.
+    */
+  final def attempt: IO[Either[Throwable, A]] =
+    map(Either.right[Throwable, A]).handleErrorWith(e => IO.pure(Either.left[Throwable, A](e)))
 
+  /**
+    * Similar to [[attempt]], but wraps the result in a [[cats.data.EitherT]] for
+    * convenience.
+    */
+  final def attemptT: EitherT[IO, Throwable, A] = EitherT(attempt)
+
+  /**
+    * Recover from certain errors by mapping them to an `A` value.
+    *
+    * @see [[handleError]] to handle any/all errors.
+    *
+    * @see [[recoverWith]] to recover from certain errors by mapping them to
+    * `F[A]` values.
+    */
   final def recover(pf: PartialFunction[Throwable, A]): IO[A] =
     handleErrorWith(e => (pf andThen IO.pure) applyOrElse(e, IO.raiseError))
 
+  /**
+    * Recover from certain errors by mapping them to an `F[A]` value.
+    *
+    * @see [[handleErrorWith]] to handle any/all errors.
+    *
+    * @see [[recover]] to recover from certain errors by mapping them to `A`
+    * values.
+    */
   final def recoverWith(pf: PartialFunction[Throwable, IO[A]]): IO[A] =
     handleErrorWith(e => pf applyOrElse(e, IO.raiseError))
 
+  /**
+    * Sequentially compose two actions, discarding any value produced by the first,
+    * like sequencing operators (such as the semicolon) in imperative languages.
+    */
   final def >>[B](next: IO[B]): IO[B] = flatMap(_ => next)
+
+  /**
+    * Sequentially compose two actions, discarding any value produced by the first,
+    * like sequencing operators (such as the semicolon) in imperative languages.
+    */
   final def *>[B](next: IO[B]): IO[B] = flatMap(_ => next)
+
+  /**
+    * Sequence actions, discarding the value of the second argument.
+    */
   final def <*[B](next: IO[B]): IO[A] = flatMap(a => next.map(_ => a))
 
   final def forever: IO[Unit] = flatMap[Unit](_ => forever)

@@ -23,6 +23,10 @@ object LiftIO {
     def liftIO[A](a: IO[A]) = XorT(F.liftIO(a.map(Xor.right[E, A])))
   }
 
+  implicit def eitherTLiftIO[F[_], E](implicit F: LiftIO[F]): LiftIO[EitherT[F, E, ?]] = new LiftIO[EitherT[F, E, ?]] {
+    def liftIO[A](a: IO[A]) = EitherT(F.liftIO(a.map(Right[E, A])))
+  }
+
   implicit def kleisliLiftIO[F[_], E](implicit F: LiftIO[F]): LiftIO[Kleisli[F, E, ?]] = new LiftIO[Kleisli[F, E, ?]] {
     def liftIO[A](a: IO[A]) = Kleisli(_ => F.liftIO(a))
   }
