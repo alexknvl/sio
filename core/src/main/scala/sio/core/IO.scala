@@ -12,10 +12,10 @@ sealed abstract class IO[A] extends Product with Serializable {
 
   /**
     * Handle any error, potentially recovering from it, by mapping it to an
-    * `F[A]` value.
+    * `IO[A]` value.
     *
     * @see [[handleError]] to handle any error by simply mapping it to an `A`
-    * value instead of an `F[A]`.
+    * value instead of an `IO[A]`.
     *
     * @see [[recoverWith]] to recover from only certain errors.
     */
@@ -24,7 +24,7 @@ sealed abstract class IO[A] extends Product with Serializable {
   /**
     * Handle any error, by mapping it to an `A` value.
     *
-    * @see [[handleErrorWith]] to map to an `F[A]` value instead of simply an
+    * @see [[handleErrorWith]] to map to an `IO[A]` value instead of simply an
     * `A` value.
     *
     * @see [[recover]] to only recover from certain errors.
@@ -60,13 +60,13 @@ sealed abstract class IO[A] extends Product with Serializable {
     * @see [[handleError]] to handle any/all errors.
     *
     * @see [[recoverWith]] to recover from certain errors by mapping them to
-    * `F[A]` values.
+    * `IO[A]` values.
     */
   final def recover(pf: PartialFunction[Throwable, A]): IO[A] =
     handleErrorWith(e => (pf andThen IO.pure) applyOrElse(e, IO.raiseError))
 
   /**
-    * Recover from certain errors by mapping them to an `F[A]` value.
+    * Recover from certain errors by mapping them to an `IO[A]` value.
     *
     * @see [[handleErrorWith]] to handle any/all errors.
     *
