@@ -1,4 +1,4 @@
-package sio.core.dmz
+package sio.dmz
 
 import scala.util.control.NonFatal
 import cats.syntax.either._

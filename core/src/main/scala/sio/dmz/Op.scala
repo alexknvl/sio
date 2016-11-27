@@ -1,4 +1,4 @@
-package sio.core.dmz
+package sio.dmz
 
 sealed abstract class Op extends Product with Serializable
 object Op {

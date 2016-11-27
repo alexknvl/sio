@@ -1,6 +1,6 @@
 package sio.core
 
-import sio.core.dmz.RealIO
+import sio.dmz.RealIO
 
 object IO {
   val unit: IO[Unit] = ST.unit

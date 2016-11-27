@@ -2,11 +2,11 @@ package sio.core
 
 import cats.data.EitherT
 import cats.syntax.either._
-import sio.core.dmz.RealIO
+import sio.dmz.RealIO
 
 import scala.language.implicitConversions
 
-final case class ST[S, A](unsafeUnwrap: dmz.RealIO[A]) {
+final case class ST[S, A](unsafeUnwrap: sio.dmz.RealIO[A]) {
   def map[B](f: A => B): ST[S, B] =
     new ST(unsafeUnwrap.map(f))
   def flatMap[B](f: A => ST[S, B]): ST[S, B] =

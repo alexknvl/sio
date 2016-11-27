@@ -1,6 +1,6 @@
 package sio.core
 
-import sio.core.dmz.RealIO
+import sio.dmz.RealIO
 
 abstract class Mutable[S, A] {
   protected def capture[F](f: => F): ST[S, F] = ST { RealIO.capture(f) }

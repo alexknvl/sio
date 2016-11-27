@@ -1,7 +1,7 @@
 package sio.core
 
 import cats.MonadError
-import sio.core.dmz.RealIO
+import sio.dmz.RealIO
 
 trait STInstances {
   implicit def stMonadError[S]: MonadError[ST[S, ?], Throwable] = new MonadError[ST[S, ?], Throwable] {

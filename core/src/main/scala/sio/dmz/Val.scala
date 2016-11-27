@@ -1,4 +1,4 @@
-package sio.core.dmz
+package sio.dmz
 
 import cats.syntax.either._
 
