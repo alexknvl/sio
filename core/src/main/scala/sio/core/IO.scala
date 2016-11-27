@@ -1,5 +1,7 @@
 package sio.core
 
+import java.util.concurrent.Callable
+
 import cats.data.EitherT
 import cats.syntax.either._
 
@@ -13,17 +15,28 @@ sealed abstract class IO[A] extends Product with Serializable {
     *
     * @return a value of type `A`.
     * @see [[unsafeAttempt]] to catch all non-fatal exceptions.
-    * @see [[unsafeTry]] to catch all non-fatal exceptions and turns result into [[Try]].
+    * @see [[unsafeTry]] to catch all non-fatal exceptions and turn the result into [[Try]].
+    * @see [[unsafeCallable]] to convert an [[IO]] action into a [[Callable]] object.
+    * @see [[unsafeRunnable]] to convert an [[IO]] action into a [[Runnable]] object
+    *     discarding the resulting value.
     */
   def unsafeRun(): A
 
   def unsafeAttempt(): Either[Throwable, A]
 
+  final def unsafeTry(): Try[A] = unsafeAttempt().toTry
+
+  final def unsafeRunnable: Runnable = new Runnable {
+    override def run(): Unit = unsafeRun()
+  }
+
+  final def unsafeCallable: Callable[A] = new Callable[A] {
+    override def call(): A = unsafeRun()
+  }
+
   def map[B](f: A => B): IO[B]
 
   def flatMap[B](f: A => IO[B]): IO[B]
-
-  final def unsafeTry(): Try[A] = unsafeAttempt().toTry
 
   /**
     * Handle any error, potentially recovering from it, by mapping it to an
