@@ -5,19 +5,18 @@
 Scala IO monad
 
 ```scala
-import sio.core.IO
+import sio.core.{ IO, SafeApp }
 import sio.teletype._
 
-object App {
+object App extends SafeApp {
   val getUserHome: IO[String] = IO { Option(System.getProperty("user.home")).get }
-  def pureMain = for {
+
+  def run(args: List[String]): IO[Unit] = for {
     h <- getUserHome
     _ <- putStr("What's your name? ")
     n <- getLine
     _ <- putStrLn(s"Hi, $n, your home directory is $h!")
   } yield ()
-  
-  def main(args: Array[String]): Unit = pureMain.unsafeRun()
 }
 ```
 
