@@ -1,6 +1,7 @@
 package sio.core
 
 import cats.MonadError
+import sio.core.dmz.RealIO
 
 trait STInstances {
   implicit def stMonadError[S]: MonadError[ST[S, ?], Throwable] = new MonadError[ST[S, ?], Throwable] {
@@ -11,7 +12,7 @@ trait STInstances {
     override def flatMap[A, B](fa: ST[S, A])(f: A => ST[S, B]): ST[S, B] =
       ST(fa.unsafeUnwrap.flatMap(a => f(a).unsafeUnwrap))
     override def tailRecM[A, B](a: A)(f: A => ST[S, Either[A, B]]): ST[S, B] =
-      ST(dmz.tailRecM(a)(a => f(a).unsafeUnwrap))
+      ST(RealIO.tailRecM(a)(a => f(a).unsafeUnwrap))
 
     override def raiseError[A](e: Throwable): ST[S, A] =
       ST.raiseError(e)

@@ -12,7 +12,7 @@ object st {
   }
   object JArray {
     def fill[S, A](len: Int)(value: => A)(implicit A: ClassTag[A]): ST[S, JArray[S, A]] =
-      ST(dmz.capture { new JArray[S, A](Array.fill(len)(value)) })
+      ST.unsafeCapture { new JArray[S, A](Array.fill(len)(value)) }
   }
 
   def calculate[S]: ST[S, Int] = for {

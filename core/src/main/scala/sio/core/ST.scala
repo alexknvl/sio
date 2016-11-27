@@ -1,9 +1,8 @@
 package sio.core
 
 import cats.data.EitherT
-import cats.{MonadError, Monad}
 import cats.syntax.either._
-import sio.core.control.{RunInBase, MonadControlIO}
+import sio.core.dmz.RealIO
 
 import scala.language.implicitConversions
 
@@ -127,11 +126,11 @@ object ST {
   def attempt[A](f: Forall[ST[?, A]]): Either[Throwable, A] = f.apply.unsafeUnwrap.attempt()
   def unsafeRun[A](f: Forall[ST[?, A]]): A = f.apply.unsafeUnwrap.run()
 
-  def unsafeCapture[S, A](a: => A): ST[S, A] = new ST(dmz.capture(a))
+  def unsafeCapture[S, A](a: => A): ST[S, A] = new ST(RealIO.capture(a))
 
-  def unit[S]: ST[S, Unit] = ST(dmz.unit)
-  def pure[S, A](x: A): ST[S, A] = ST(dmz.pure(x))
-  def raiseError[S, A](e: Throwable): ST[S, A] = ST(dmz.raiseError(e))
+  def unit[S]: ST[S, Unit] = ST(RealIO.unit)
+  def pure[S, A](x: A): ST[S, A] = ST(RealIO.pure(x))
+  def raiseError[S, A](e: Throwable): ST[S, A] = ST(RealIO.raiseError(e))
 
   def trace[S](s: String): ST[S, Unit] = unsafeCapture { System.err.println(s) }
 }
