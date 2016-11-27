@@ -2,14 +2,9 @@ package sio.regions
 
 import cats.Monad
 import cats.data.{ReaderT, Kleisli}
-import cats.syntax.traverse._
-import cats.syntax.foldable._
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.all._
 import cats.instances.list._
-import sio.core.{MonadIO, IO}
-import sio.ioref.IORef
-import sio.ioref.newIORef
+import sio.core.{Forall, IORef, MonadIO, IO}
 
 /**
   * A monad transformer in which scarce resources can be opened.
@@ -48,10 +43,6 @@ object RegionT {
 }
 
 object `package` {
-  trait Forall[F[_]] {
-    def apply[A]: F[A]
-  }
-
   /**
     * Forall[λ[X => (M[X] => Base[M[X]])]]
     */
@@ -70,7 +61,7 @@ object `package` {
   @SuppressWarnings(Array("org.wartremover.warts.NoNeedForMonad"))
   private[this] def addFinalizer[F[_]](finalizersRef: IORef[List[RefCountedFinalizer]], finalizer: IO[Unit]): IO[FinalizerHandle[F]] =
     for {
-      countRef <- newIORef[Int](1)
+      countRef <- IORef.create[Int](1)
       h = RefCountedFinalizer(finalizer, countRef)
       _ <- finalizersRef.modify(h :: _)
     } yield FinalizerHandle[F](h)
@@ -101,5 +92,5 @@ object `package` {
     * The Forall quantifier prevents resources from being returned by this function.
     */
   def runRegionT[P[_], A](r: Forall[RegionT[?, P, A]])(implicit P: MonadControlIO[P]): P[A] =
-    newIORef(List.empty[RefCountedFinalizer]).bracketIO(exitBlock)(r.apply.run.apply)
+    IORef.create(List.empty[RefCountedFinalizer]).bracketIO(exitBlock)(r.apply.run.apply)
 }

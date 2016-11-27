@@ -13,7 +13,7 @@ object App {
   def pureMain = for {
     h <- getUserHome
     _ <- putStr("What's your name? ")
-    n <- readLn
+    n <- getLine
     _ <- putStrLn(s"Hi, $n, your home directory is $h!")
   } yield ()
   

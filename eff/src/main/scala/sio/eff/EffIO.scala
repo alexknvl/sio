@@ -1,12 +1,13 @@
 package sio.eff
 
+import cats.syntax.all._
+
 import sio.core.IO
-import cats.syntax.either._
 import ops.{Intersection, Union}
 
 import Effect.{ !, !! }
 
-final class EffIO[E <: !!, A] private (val runEff: IO[A]) extends AnyVal {
+final class EffIO[E <: !!, A] private (val runEff: IO[A]) {
   def map[B](f: A => B): EffIO[E, B] =
     new EffIO(runEff.map(f))
   def flatMap[B, F <: !!, G <: !!](f: A => EffIO[F, B])(implicit u: Union[E, F, G]): EffIO[G, B] =

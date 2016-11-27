@@ -1,7 +1,8 @@
 package sio.core
 
-import cats.data.Xor
+import cats.data.{EitherT, Xor}
 import cats.syntax.either._
+import scala.annotation.tailrec
 import scala.util.control.NonFatal
 
 @SuppressWarnings(Array(
@@ -37,7 +38,7 @@ object dmz {
     final case class Handle(f: Throwable => Thunk) extends Op
   }
 
-  val unit: IO[Unit] = RealIO(Vector.empty[Op])
+  val unit: RealIO[Unit] = RealIO(Vector.empty[Op])
 
   def pure[A](x: A): RealIO[A] =
     RealIO(Vector(Op.Map(Val.castK2((u: Unit) => x))))
@@ -46,19 +47,24 @@ object dmz {
   def raiseError[A](e: Throwable): RealIO[A] =
     RealIO(Vector(Op.Map(Val.castK2((u: Unit) => (throw e) : Val))))
 
-  def getIOThunk[A](io: IO[A]): Thunk =
-    io.asInstanceOf[RealIO[A]].thunk
+  def tailRecM[A, B](a: A)(f: A => RealIO[Either[A, B]]): RealIO[B] =
+    pure(a).flatMap(a => f(a).flatMap {
+      case Right(b) => pure(b)
+      case Left(x) => tailRecM(x)(f)
+    })
 
-  final case class RealIO[A](thunk: Thunk) extends ForwarderIO[A] {
-    def map[B](f: A => B): IO[B] =
+  def getThunk[A](io: RealIO[A]): Thunk = io.thunk
+
+  final case class RealIO[A](thunk: Thunk) {
+    def map[B](f: A => B): RealIO[B] =
       RealIO(thunk :+ Op.Map(Val.castK2(f)))
-    def flatMap[B](f: A => IO[B]): IO[B] =
-      RealIO(thunk :+ Op.Bind(Val.castK21(f andThen getIOThunk)))
-    def handleErrorWith(f: Throwable => IO[A]): IO[A] =
-      RealIO(thunk :+ Op.Handle(f andThen getIOThunk))
+    def flatMap[B](f: A => RealIO[B]): RealIO[B] =
+      RealIO(thunk :+ Op.Bind(Val.castK21(f andThen getThunk)))
+    def handleErrorWith(f: Throwable => RealIO[A]): RealIO[A] =
+      RealIO(thunk :+ Op.Handle(f andThen getThunk))
 
-    override def unsafeAttempt(): Either[Throwable, A] = unsafeAttemptIO(this)
-    override def unsafeRun(): A = unsafePerformIO(this)
+    def run(): A = unsafePerformIO(this)
+    def attempt(): Either[Throwable, A] = unsafeAttemptIO(this)
   }
 
   def unsafeAttemptIO[A](io: RealIO[A]): Either[Throwable, A] = {

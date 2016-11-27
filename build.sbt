@@ -79,15 +79,10 @@ lazy val iterateeGZip = (project in file("iteratee-gzip")).
   settings(libraryDependencies ++= iterateeLibraries).
   dependsOn(core, iteratee, iterateeFiles)
 
-lazy val ioref = (project in file("ioref")).
-  settings(name := "sio-ioref").
-  settings(commonSettings: _*).
-  dependsOn(core)
-
 lazy val regions = (project in file("regions")).
   settings(name := "sio-regions").
   settings(commonSettings: _*).
-  dependsOn(core, ioref)
+  dependsOn(core)
 
 lazy val eff = (project in file("eff")).
   settings(name := "sio-eff").
@@ -112,13 +107,13 @@ lazy val macros = (project in file("macros")).
 lazy val example = (project in file("example")).
   settings(name := "sio-example").
   settings(commonSettings: _*).
-  dependsOn(core, eff, ioref, teletype, regions)
+  dependsOn(core, eff, teletype, regions)
 
 lazy val root = (project in file(".")).
   settings(name := "sio").
   settings(commonSettings: _*).
   aggregate(
     core, eff, regions,
-    ioref, teletype,
+    teletype,
     iteratee, iterateeFiles, iterateeGZip,
     example)

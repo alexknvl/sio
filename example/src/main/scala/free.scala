@@ -31,7 +31,7 @@ object free {
 
   object InteractIOInterpreter extends (Interact ~> IO) {
     def apply[A](i: Interact[A]) = i match {
-      case Interact.Ask(x) => teletype.putStrLn(x) >> teletype.readLn
+      case Interact.Ask(x) => teletype.putStrLn(x) >> teletype.getLine
       case Interact.Tell(x) => teletype.putStrLn(x)
     }
   }

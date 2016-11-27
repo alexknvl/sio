@@ -1,4 +1,4 @@
-import sio.core.IO
+import sio.core.{IO, Forall}
 import sio.teletype._
 import sio.regions._
 import cats.syntax.all._

@@ -2,6 +2,7 @@ package sio.core
 
 import cats.Monad
 import cats.data._
+import cats.syntax.functor._
 import cats.kernel.Monoid
 import simulacrum.typeclass
 

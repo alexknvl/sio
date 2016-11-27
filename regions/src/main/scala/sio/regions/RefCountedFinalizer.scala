@@ -1,7 +1,6 @@
 package sio.regions
 
-import sio.core.IO
-import sio.ioref.IORef
+import sio.core.{IORef, IO}
 
 /**
   * Created by alex on 9/3/16.

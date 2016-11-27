@@ -1,6 +1,6 @@
 package sio.regions
 
-import cats.Monad
+import cats.syntax._
 import simulacrum.typeclass
 import sio.core.{MonadIO, IO}
 
