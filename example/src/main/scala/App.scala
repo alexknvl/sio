@@ -1,8 +1,8 @@
-import sio.core.IO
+import sio.core.{SafeApp, IO}
 import sio.teletype._
 
-object App {
-  def main(args: Array[String]): Unit = List(
+object App extends SafeApp {
+  def run(args: List[String]): IO[Unit] = List(
     "core"    -> core.run,
     "eff"     -> eff.run.runEff,
     "free"    -> free.main,
@@ -11,5 +11,5 @@ object App {
     "st"      -> st.run
   ).foldLeft(IO.unit) { case (io, (name, main)) =>
       io >> putStrLn(s"Running $name") >> main >> putStrLn("")
-  }.unsafeRun()
+  }
 }
