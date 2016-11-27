@@ -6,6 +6,13 @@ import scala.language.implicitConversions
 
 final case class ST[S, A](unsafeUnwrap: dmz.RealIO[A]) {
   def io: IO[A] = new IO(unsafeUnwrap)
+
+  def map[B](f: A => B): ST[S, B] =
+    new ST(unsafeUnwrap.map(f))
+  def flatMap[B](f: A => ST[S, B]): ST[S, B] =
+    new ST(unsafeUnwrap.flatMap(x => f(x).unsafeUnwrap))
+  def handleErrorWith(f: Throwable => ST[S, A]): ST[S, A] =
+    new ST(unsafeUnwrap.handleErrorWith(x => f(x).unsafeUnwrap))
 }
 
 object ST {

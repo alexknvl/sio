@@ -7,7 +7,8 @@ object App {
     "eff"     -> eff.run.runEff,
     "free"    -> free.main,
     "ioref"   -> ioref.run,
-    "regions" -> regions.main
+    "regions" -> regions.main,
+    "st"      -> st.run
   ).foldLeft(IO.unit) { case (io, (name, main)) =>
       io >> putStrLn(s"Running $name") >> main >> putStrLn("")
   }.unsafeRun()
