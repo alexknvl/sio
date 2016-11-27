@@ -38,7 +38,7 @@ lazy val commonSettings = List(
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.8.0"),
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   organization := "com.alexknvl",
-  version := "0.1-SNAPSHOT",
+  version := "0.2-SNAPSHOT",
   scalaOrganization := "org.typelevel",
   scalaVersion := "2.11.8",
   scalacOptions ++= List(
