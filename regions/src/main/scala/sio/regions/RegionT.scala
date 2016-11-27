@@ -6,7 +6,7 @@ import cats.syntax.all._
 import cats.instances.list._
 import sio.core._
 import sio.core.control._
-import sio.core.instances._
+import sio.core.instances.all._
 
 /**
   * A monad transformer in which scarce resources can be opened.

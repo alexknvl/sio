@@ -1,8 +1,9 @@
-package sio.core
+package sio.core.instances
 
 import cats.Monad
 import cats.data._
 import cats.kernel.Monoid
+import sio.core._
 
 trait LiftIOInstances {
   implicit def idTLiftIO[F[_]](implicit F: LiftIO[F]): LiftIO[IdT[F, ?]] = new LiftIO[IdT[F, ?]] {

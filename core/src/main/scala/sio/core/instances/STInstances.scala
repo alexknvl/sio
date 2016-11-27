@@ -1,6 +1,7 @@
-package sio.core
+package sio.core.instances
 
 import cats.MonadError
+import sio.core.ST
 import sio.dmz.RealIO
 
 trait STInstances {

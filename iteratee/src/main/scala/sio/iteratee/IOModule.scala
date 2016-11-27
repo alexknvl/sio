@@ -2,7 +2,7 @@ package sio.iteratee
 
 import cats.MonadError
 import sio.core.IO
-import sio.core.instances._
+import sio.core.instances.all._
 import io.iteratee.{IterateeErrorModule, EnumeratorErrorModule, EnumerateeModule, Module}
 
 trait IOModule extends Module[IO]

@@ -4,8 +4,6 @@ import cats.data.EitherT
 import cats.syntax.either._
 import sio.dmz.RealIO
 
-import scala.language.implicitConversions
-
 final case class ST[S, A](unsafeUnwrap: sio.dmz.RealIO[A]) {
   def map[B](f: A => B): ST[S, B] =
     new ST(unsafeUnwrap.map(f))

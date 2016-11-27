@@ -1,6 +1,7 @@
-package sio.core
+package sio.core.instances
 
 import cats.MonadError
+import sio.core._
 
 trait IOInstances { self: STInstances =>
   implicit val ioMonadIO: MonadIO[IO] = new MonadIO[IO] {
