@@ -5,6 +5,8 @@ import cats.data.{ReaderT, Kleisli}
 import cats.syntax.all._
 import cats.instances.list._
 import sio.core._
+import sio.core.control._
+import sio.core.instances._
 
 /**
   * A monad transformer in which scarce resources can be opened.
@@ -43,18 +45,10 @@ object RegionT {
 }
 
 object `package` {
-  implicit final class IOExtraOps[A](val io: IO[A]) extends AnyVal {
-    def bracketIO[M[_], B](after: A => IO[Unit])(during: A => M[B])(implicit M: MonadControlIO[M]): M[B] =
-      M.controlIO((runInIO: RunInBase[M, IO]) => io.bracket(after)(during andThen runInIO.apply))
-  }
-
-  def idLiftControl[M[_], A](f: RunInBase[M, M] => M[A])(implicit M: Monad[M]): M[A] =
-    f(new RunInBase[M, M] { def apply[B](x: M[B]): M[M[B]] = x.map(M.pure) })
-
   @SuppressWarnings(Array("org.wartremover.warts.NoNeedForMonad"))
   private[this] def addFinalizer[F[_]](finalizersRef: IORef[List[RefCountedFinalizer]], finalizer: IO[Unit]): IO[FinalizerHandle[F]] =
     for {
-      countRef <- IORef.create[Int](1)
+      countRef <- newIORef[Int](1)
       h = RefCountedFinalizer(finalizer, countRef)
       _ <- finalizersRef.modify(h :: _)
     } yield FinalizerHandle[F](h)
@@ -85,5 +79,5 @@ object `package` {
     * The Forall quantifier prevents resources from being returned by this function.
     */
   def runRegionT[P[_], A](r: Forall[RegionT[?, P, A]])(implicit P: MonadControlIO[P]): P[A] =
-    IORef.create(List.empty[RefCountedFinalizer]).bracketIO(exitBlock)(r.apply.run.apply)
+    newIORef(List.empty[RefCountedFinalizer]).bracketIO(exitBlock)(r.apply.run.apply)
 }

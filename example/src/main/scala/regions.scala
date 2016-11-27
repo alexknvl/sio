@@ -2,6 +2,7 @@ import sio.core.{IO, Forall}
 import sio.teletype._
 import sio.regions._
 import cats.syntax.all._
+import sio.core.instances._
 
 object regions {
   def regionMain[S]: RegionT[S, IO, Unit] = for {

@@ -1,5 +1,6 @@
 import sio.core.IO
 import sio.teletype._
+import sio.core.instances._
 
 object App {
   def main(args: Array[String]): Unit = List(
