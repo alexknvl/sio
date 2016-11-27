@@ -1,11 +1,11 @@
 import sio.core._
-
+import sio.core.syntax.all._
 import sio.teletype.putStrLn
 import cats.kernel.instances.int._
 
 object st {
   def calculate[S]: ST[S, (Int, Int)] = for {
-    a <- STArray.fill(10)(2)
+    a <- fillSTArray(10)(2)
     _ <- a.transform(_ * 2)
     _ <- a.set(3, 0)
     _ <- a.stableSort

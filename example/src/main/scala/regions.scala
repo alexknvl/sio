@@ -3,6 +3,7 @@ import sio.teletype._
 import sio.regions._
 import cats.syntax.all._
 import sio.core.instances.all._
+import sio.core.syntax.io._
 
 object regions {
   def regionMain[S]: RegionT[S, IO, Unit] = for {
