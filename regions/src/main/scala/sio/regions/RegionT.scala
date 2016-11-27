@@ -4,7 +4,7 @@ import cats.Monad
 import cats.data.{ReaderT, Kleisli}
 import cats.syntax.all._
 import cats.instances.list._
-import sio.core.{Forall, IORef, MonadIO, IO}
+import sio.core._
 
 /**
   * A monad transformer in which scarce resources can be opened.
@@ -43,13 +43,6 @@ object RegionT {
 }
 
 object `package` {
-  /**
-    * Forall[λ[X => (M[X] => Base[M[X]])]]
-    */
-  trait RunInBase[M[_], Base[_]] {
-    def apply[A](x: M[A]): Base[M[A]]
-  }
-
   implicit final class IOExtraOps[A](val io: IO[A]) extends AnyVal {
     def bracketIO[M[_], B](after: A => IO[Unit])(during: A => M[B])(implicit M: MonadControlIO[M]): M[B] =
       M.controlIO((runInIO: RunInBase[M, IO]) => io.bracket(after)(during andThen runInIO.apply))
