@@ -1,14 +1,14 @@
 package sio.core.syntax
 
 import cats.kernel.Order
-import sio.core.{STArray, ST, Handle}
+import sio.core.{STArray, ST, Mutable}
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.util.Sorting
 
 trait STArraySyntax {
-  implicit class STArraySyntax[S, E](handle: STArray[S, E]) extends Handle.Syntax(handle) {
+  implicit class STArraySyntax[S, E](handle: STArray[S, E]) extends Mutable.Syntax(handle) {
     def length: ST[S, Int] = lift { _.length }
 
     def get(i: Int): ST[S, E] = lift { _.apply(i) }

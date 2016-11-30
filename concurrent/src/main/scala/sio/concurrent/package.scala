@@ -2,7 +2,7 @@ package sio
 
 import java.util.{concurrent => C}
 
-import sio.core.{IOHandle, IO}
+import sio.core.{IOMutable, IO}
 
 package object concurrent {
   final class MVar[A](unsafeQueue: C.BlockingQueue[A]) {
@@ -47,10 +47,10 @@ package object concurrent {
     new MVar[A](bq)
   }
 
-  def forkOS(action: IO[Unit]): IO[IOHandle[Thread]] = IO {
+  def forkOS(action: IO[Unit]): IO[IOMutable[Thread]] = IO {
     val thread = new Thread(IO.unsafeRunnable(action))
     thread.start()
-    IO.handle(thread)
+    IO.mutable(thread)
   }
 
   def forkIO(action: IO[Unit]): IO[Unit] = IO {

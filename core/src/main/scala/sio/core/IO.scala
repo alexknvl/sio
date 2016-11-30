@@ -27,5 +27,5 @@ object IO {
   def unsafeRunnable[A](io: IO[A]): Runnable = new Runnable { def run(): Unit = io.unsafeUnwrap.run() }
   def unsafeCallable[A](io: IO[A]): Callable[A] = new Callable[A] { def call(): A = io.unsafeUnwrap.run() }
 
-  def handle[A](a: A): IOHandle[A] = new Handle(a)
+  def mutable[A](a: A): IOMutable[A] = new Mutable(a)
 }

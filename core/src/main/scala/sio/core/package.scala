@@ -10,11 +10,10 @@ package object core {
   type STRef[S, A] = Ref[S, A]
   type IORef[A] = Ref[RealWorld, A]
 
-  type STHandle[S, A] = Handle[S, A]
-  type IOHandle[A] = Handle[RealWorld, A]
+  type IOMutable[A] = Mutable[RealWorld, A]
 
-  type STArray[S, E] = Handle[S, Array[E]]
-  type IOArray[E] = IOHandle[Array[E]]
+  type STArray[S, E] = Mutable[S, Array[E]]
+  type IOArray[E] = IOMutable[Array[E]]
 
   def newSTRef[S, A](a: A): ST[S, Ref[S, A]] =
     ST.unsafeCapture { new Ref[S, A](a) }
