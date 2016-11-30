@@ -14,7 +14,7 @@ object st {
   } yield (first, second)
 
   def run: IO[Unit] = {
-    val x = ST.attempt(new Forall[ST[?, (Int, Int)]] { def apply[A]: ST[A, (Int, Int)] = calculate })
+    val x = ST.attempt(new ForallST[(Int, Int)] { def apply[A]: ST[A, (Int, Int)] = calculate })
     putStrLn(x.toString)
   }
 }

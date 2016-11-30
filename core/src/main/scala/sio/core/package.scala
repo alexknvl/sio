@@ -15,6 +15,8 @@ package object core {
   type STArray[S, E] = Mutable[S, Array[E]]
   type IOArray[E] = IOMutable[Array[E]]
 
+  type ForallST[A] = Forall[ST[?, A]]
+
   def newSTRef[S, A](a: A): ST[S, Ref[S, A]] =
     ST.unsafeCapture { new Ref[S, A](a) }
   def newIORef[A](a: => A): IO[IORef[A]] =
