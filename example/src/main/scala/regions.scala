@@ -1,4 +1,4 @@
-import sio.core.{IO, Forall}
+import sio.core.IO
 import sio.teletype._
 import sio.regions._
 import cats.syntax.all._
@@ -11,5 +11,5 @@ object regions {
     _ <- onExit[S, IO](putStrLn("Closing the file."))
   } yield ()
 
-  def main: IO[Unit] = runRegionT(new Forall[RegionT[?, IO, Unit]] { def apply[A] = regionMain })
+  def main: IO[Unit] = runRegionT(new ForallRegionT[IO, Unit] { def apply[A] = regionMain })
 }

@@ -37,5 +37,5 @@ object free {
     }
   }
 
-  def main: IO[Unit] = program.foldMapUnsafe(InteractIOInterpreter)
+  def main: IO[Unit] = program.foldMap(InteractIOInterpreter)
 }

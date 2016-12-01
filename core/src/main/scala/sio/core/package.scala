@@ -1,26 +1,20 @@
 package sio
 
-import scala.reflect.ClassTag
+import sio.base.Forall
+import sio.base.free.FreeME
 
 package object core {
-  final abstract class RealWorld private ()
+  type Thunk[S, A] = FreeME[Op[S, ?], Throwable, A]
 
-  type IO[A] = ST[RealWorld, A]
+  type IO[A] = ST[World.Real, A]
 
   type STRef[S, A] = Ref[S, A]
-  type IORef[A] = Ref[RealWorld, A]
-
-  type IOMutable[A] = Mutable[RealWorld, A]
-
+  type STMutable[S, A] = Mutable[S, A]
   type STArray[S, E] = Mutable[S, Array[E]]
+
+  type IORef[A] = Ref[World.Real, A]
+  type IOMutable[A] = Mutable[World.Real, A]
   type IOArray[E] = IOMutable[Array[E]]
 
   type ForallST[A] = Forall[ST[?, A]]
-
-  def newSTRef[S, A](a: A): ST[S, Ref[S, A]] =
-    ST.unsafeCapture { new Ref[S, A](a) }
-  def newIORef[A](a: => A): IO[IORef[A]] =
-    IO { new Ref[RealWorld, A](a) }
-  def fillSTArray[S, A](len: Int)(value: => A)(implicit A: ClassTag[A]): ST[S, STArray[S, A]] =
-    ST.unsafeCapture { new STArray[S, A](Array.fill(len)(value)) }
 }

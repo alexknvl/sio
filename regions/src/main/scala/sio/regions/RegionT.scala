@@ -4,6 +4,7 @@ import cats.Monad
 import cats.data.{ReaderT, Kleisli}
 import cats.syntax.all._
 import cats.instances.list._
+import sio.base.Forall
 import sio.core._
 import sio.core.control._
 import sio.core.instances.all._
@@ -22,12 +23,12 @@ import sio.core.syntax.io._
 final case class RegionT[S, P[_], A](run: ReaderT[P, IORef[List[RefCountedFinalizer]], A]) extends AnyVal
 
 object RegionT {
-  def readerTMonad[M[_]](implicit M: Monad[M]) = Monad[ReaderT[M, IORef[List[RefCountedFinalizer]], ?]]
+  def readerTMonad[M[_]](implicit M: Monad[M]): Monad[ReaderT[M, IORef[List[RefCountedFinalizer]], ?]] = implicitly
 
   def liftIO[S, M[_], A](a: IO[A])(implicit M: MonadIO[M]): RegionT[S, M, A] = RegionT(ReaderT(_ => M.liftIO(a)))
 
   implicit def regionTMonad[S, M[_]](implicit M: MonadIO[M]): MonadIO[RegionT[S, M, ?]] = new MonadIO[RegionT[S, M, ?]] {
-    val RM = readerTMonad[M]
+    val RM: Monad[ReaderT[M, IORef[List[RefCountedFinalizer]], ?]] = readerTMonad[M]
 
     override def pure[A](x: A): RegionT[S, M, A] =
       RegionT(ReaderT(_ => M.pure(x)))
@@ -46,10 +47,12 @@ object RegionT {
 }
 
 object `package` {
+  type ForallRegionT[F[_], A] = Forall[RegionT[?, F, A]]
+
   @SuppressWarnings(Array("org.wartremover.warts.NoNeedForMonad"))
   private[this] def addFinalizer[F[_]](finalizersRef: IORef[List[RefCountedFinalizer]], finalizer: IO[Unit]): IO[FinalizerHandle[F]] =
     for {
-      countRef <- newIORef[Int](1)
+      countRef <- IORef.create[Int](1)
       h = RefCountedFinalizer(finalizer, countRef)
       _ <- finalizersRef.modify(h :: _)
     } yield FinalizerHandle[F](h)
@@ -80,5 +83,5 @@ object `package` {
     * The Forall quantifier prevents resources from being returned by this function.
     */
   def runRegionT[P[_], A](r: Forall[RegionT[?, P, A]])(implicit P: MonadControlIO[P]): P[A] =
-    newIORef(List.empty[RefCountedFinalizer]).bracketIO(exitBlock)(r.apply.run.apply)
+    IORef.create(List.empty[RefCountedFinalizer]).bracketIO(exitBlock)(r.apply.run.apply)
 }

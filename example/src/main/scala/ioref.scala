@@ -1,4 +1,4 @@
-import sio.core.{IORef, IO, newIORef}
+import sio.core.{IORef, IO}
 import sio.teletype._
 
 object ioref {
@@ -10,7 +10,7 @@ object ioref {
   } yield ()
 
   def run = for {
-    ref <- newIORef(0)
+    ref <- IORef.create(0)
     _   <- loop(ref)
     i   <- ref.read
     _   <- putStrLn(s"Done: $i")

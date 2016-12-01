@@ -5,7 +5,7 @@ import cats.kernel.instances.int._
 
 object st {
   def calculate[S]: ST[S, (Int, Int)] = for {
-    a <- fillSTArray(10)(2)
+    a <- STArray.fill(10)(2)
     _ <- a.transform(_ * 2)
     _ <- a.set(3, 0)
     _ <- a.stableSort
@@ -14,7 +14,7 @@ object st {
   } yield (first, second)
 
   def run: IO[Unit] = {
-    val x = ST.attempt(new ForallST[(Int, Int)] { def apply[A]: ST[A, (Int, Int)] = calculate })
+    val x = ST.run(new ForallST[(Int, Int)] { def apply[A]: ST[A, (Int, Int)] = calculate })
     putStrLn(x.toString)
   }
 }

@@ -2,15 +2,16 @@ package sio.core
 
 import cats.data.EitherT
 import cats.syntax.either._
-import sio.dmz.RealIO
+import cats.~>
+import sio.base.free.FreeME
 
-final case class ST[S, A](unsafeUnwrap: sio.dmz.RealIO[A]) {
+final case class ST[S, A](value: Thunk[S, A]) {
   def map[B](f: A => B): ST[S, B] =
-    new ST(unsafeUnwrap.map(f))
+    new ST(value.map(f))
   def flatMap[B](f: A => ST[S, B]): ST[S, B] =
-    new ST(unsafeUnwrap.flatMap(x => f(x).unsafeUnwrap))
+    new ST(value.flatMap(x => f(x).value))
   def handleErrorWith(f: Throwable => ST[S, A]): ST[S, A] =
-    new ST(unsafeUnwrap.handleErrorWith(x => f(x).unsafeUnwrap))
+    new ST(value.handleErrorWith(x => f(x).value))
 
   /**
     * Handle any error, by mapping it to an `A` value.
@@ -121,14 +122,23 @@ final case class ST[S, A](unsafeUnwrap: sio.dmz.RealIO[A]) {
 }
 
 object ST {
-  def attempt[A](f: Forall[ST[?, A]]): Either[Throwable, A] = f.apply.unsafeUnwrap.attempt()
-  def unsafeRun[A](f: Forall[ST[?, A]]): A = f.apply.unsafeUnwrap.run()
+  def unit[S]: ST[S, Unit] =
+    new ST(Thunk.unit)
+  def pure[S, A](x: A): ST[S, A] =
+    new ST(Thunk.pure(x))
+  def raiseError[S, A](x: Throwable): ST[S, A] =
+    new ST(Thunk.raiseError(x))
 
-  def unsafeCapture[S, A](a: => A): ST[S, A] = new ST(RealIO.capture(a))
+  def unsafeCapture[S, A](a: => A): ST[S, A] =
+    new ST(Thunk.suspend(Op.Effect(() => a)))
 
-  def unit[S]: ST[S, Unit] = ST(RealIO.unit)
-  def pure[S, A](x: A): ST[S, A] = ST(RealIO.pure(x))
-  def raiseError[S, A](e: Throwable): ST[S, A] = ST(RealIO.raiseError(e))
+  def run[S, A](forallST: ForallST[A]): Either[Throwable, A] =
+    forallST.apply[World.Local].value.run(new (Op[World.Local, ?] ~> Either[Throwable, ?]) {
+      override def apply[B](op: Op[World.Local, B]): Either[Throwable, B] = op match {
+        case Op.Effect(f) => Either.catchNonFatal(f())
+      }
+    })
 
-  def trace[S](s: String): ST[S, Unit] = unsafeCapture { System.err.println(s) }
+  def trace[S](s: String): ST[S, Unit] =
+    unsafeCapture { System.err.println(s) }
 }

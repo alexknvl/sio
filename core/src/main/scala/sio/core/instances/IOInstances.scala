@@ -1,11 +1,11 @@
 package sio.core.instances
 
-import cats.MonadError
+import cats.{RecursiveTailRecM, MonadError}
 import sio.core._
 
-trait IOInstances { self: STInstances =>
+trait IOInstances extends STInstances { self: STInstances =>
   implicit val ioMonadIO: MonadIO[IO] = new MonadIO[IO] {
-    private val M: MonadError[ST[RealWorld, ?], Throwable] = self.stMonadError
+    private val M: MonadError[ST[World.Real, ?], Throwable] = self.stMonadError
 
     override def pure[A](x: A): IO[A] =
       M.pure(x)
