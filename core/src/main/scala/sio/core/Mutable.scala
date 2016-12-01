@@ -10,4 +10,9 @@ object Mutable {
     final def lift[B](f: A => B): ST[S, B] = ST.unsafeCapture { f(handle.unsafeValue) }
     final def unit[B](f: A => B): ST[S, Unit] = ST.unsafeCapture { f(handle.unsafeValue); () }
   }
+
+  abstract class IOSyntax[A](val handle: IOMutable[A]) {
+    final def lift[B](f: A => B): IO[B] = IO { f(handle.unsafeValue) }
+    final def unit[B](f: A => B): IO[Unit] = IO { f(handle.unsafeValue); () }
+  }
 }
