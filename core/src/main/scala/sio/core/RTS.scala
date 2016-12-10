@@ -12,7 +12,7 @@ class RTS { self =>
     *
     * @return a value of type `A`.
     */
-  def run[A](io: IO[A]): Either[Throwable, A] =
+  def run[A](io: IO[A]): Impure[Either[Throwable, A]] =
     io.value.run(new (Op[World.Real, ?] ~> Either[Throwable, ?]) {
       override def apply[B](op: Op[World.Real, B]): Either[Throwable, B] = op match {
         case Op.Effect(f) => Either.catchNonFatal(f())

@@ -1,9 +1,12 @@
 package sio
 
+import cats.Id
 import sio.base.Forall
 import sio.base.free.FreeME
 
 package object core {
+  type Impure[A] = Id[A]
+
   type Thunk[S, A] = FreeME[Op[S, ?], Throwable, A]
 
   type IO[A] = ST[World.Real, A]

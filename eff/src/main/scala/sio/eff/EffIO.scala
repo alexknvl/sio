@@ -2,7 +2,7 @@ package sio.eff
 
 import cats.syntax.all._
 
-import sio.core.IO
+import sio.core._
 import ops.{Intersection, Union}
 
 import Effect.{ !, !! }
@@ -38,6 +38,6 @@ final class EffIO[E <: !!, A] private (val runEff: IO[A]) {
 object EffIO {
   def lift[E <: EffectSet, A](io: IO[A]): EffIO[E, A] = new EffIO(io)
   def lift1[E <: Effect, A](io: IO[A]): EffIO[Effect.fx1[E], A] = new EffIO(io)
-  def apply[E <: EffectSet, A](action: => A): EffIO[E, A] = new EffIO(IO(action))
+  def apply[E <: EffectSet, A](action: => Impure[A]): EffIO[E, A] = new EffIO(IO(action))
   def pure[E <: EffectSet, A](x: A): EffIO[E, A] = new EffIO(IO.pure(x))
 }

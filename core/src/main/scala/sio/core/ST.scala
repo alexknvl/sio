@@ -129,7 +129,7 @@ object ST {
   def raiseError[S, A](x: Throwable): ST[S, A] =
     new ST(Thunk.raiseError(x))
 
-  def unsafeCapture[S, A](a: => A): ST[S, A] =
+  def unsafeCapture[S, A](a: => Impure[A]): ST[S, A] =
     new ST(Thunk.suspend(Op.Effect(() => a)))
 
   def run[S, A](forallST: ForallST[A]): Either[Throwable, A] =
