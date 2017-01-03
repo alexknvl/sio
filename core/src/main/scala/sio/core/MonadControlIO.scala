@@ -25,19 +25,3 @@ import sio.base.{MonadControl, RunInBase}
   *   controlIO $ \runInIO -> runInIO m = m
   */
 @typeclass trait MonadControlIO[F[_]] extends MonadIO[F] with MonadControl[F, IO]
-
-object MonadControlIO {
-  implicit val ioInstance: MonadControlIO[IO] = new MonadControlIO[IO] {
-    override def pure[A](x: A): IO[A] = IO.pure(x)
-    override def raiseError[A](e: Throwable): IO[A] = IO.raiseError(e)
-
-    override def liftIO[A](a: IO[A]): IO[A] = a
-    override def liftControl[A](f: (RunInBase[IO, IO]) => IO[A]): IO[A] = f(new RunInBase[IO, IO] {
-      override def apply[B](x: IO[B]): IO[IO[B]] = x.map(IO.pure)
-    })
-
-    override def flatMap[A, B](fa: IO[A])(f: (A) => IO[B]): IO[B] = fa.flatMap(f)
-    override def tailRecM[A, B](a: A)(f: (A) => IO[Either[A, B]]): IO[B] = defaultTailRecM(a)(f)
-    override def handleErrorWith[A](fa: IO[A])(f: (Throwable) => IO[A]): IO[A] = fa.handleErrorWith(f)
-  }
-}
