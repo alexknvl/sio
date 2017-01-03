@@ -28,7 +28,7 @@ final case class Thunk[F[_], E, A, B](ops: List[Op[F, E, Any, Any]]) {
       queue.popHead() match {
         case None => value
         case Some(Op.Pure(x)) =>
-          loop(x)
+          loop(x.flatMap(_ => x))
         case Some(Op.Suspend(x)) =>
           loop(M.flatMap(value)(_ => run.apply(x)))
         case Some(Op.Map(f)) =>

@@ -13,16 +13,13 @@ final class ArrayQueue[T]
   @inline private[this] def next(i: Int) = (i + 1) % capacity
   @inline private[this] def prev(i: Int) = (i - 1 + capacity) % capacity
 
-  private[this] def increaseCapacity(margin: Int = 1): Unit = {
-    val newCapacity = math.max(16, (capacity + margin) * 3 / 2)
+  def ensureCapacity(atLeast: Int): Unit = {
+    val newCapacity = math.max(16, math.max(capacity, atLeast * 3 / 2))
     val newData = tag.newArray(newCapacity)
 
-    val tailLength =
-      if (front > rear) count
-      else data.length - rear
-
-    Array.copy(data, rear, newData, 0, tailLength)
-    Array.copy(data, 0, newData, tailLength, count - tailLength)
+    val tail = math.min(count, data.length - front)
+    System.arraycopy(data, front, newData, 0, tail)
+    System.arraycopy(data, 0, newData, tail, count - tail)
 
     data = newData
     front = 0
@@ -38,14 +35,14 @@ final class ArrayQueue[T]
 
   def prepend(item: T): Unit = {
     if (count == capacity)
-      increaseCapacity()
+      ensureCapacity(count + 1)
     count += 1
     front = prev(front)
     data(front) = item
   }
   def append(item: T): Unit = {
     if (count == capacity)
-      increaseCapacity()
+      ensureCapacity(count + 1)
     count += 1
     rear = next(rear)
     data(rear) = item
