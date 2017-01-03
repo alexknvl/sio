@@ -5,7 +5,7 @@ import cats.syntax.either._
 import cats.~>
 import sio.core.detail.Thunk
 
-final case class ST[S, A](value: Thunk[Op[S, ?], Throwable, Unit, A]) {
+final case class ST[S, A](value: Thunk[IOOp[S, ?], Throwable, Unit, A]) {
   def map[B](f: A => B): ST[S, B] =
     new ST(value.map(f))
   def flatMap[B](f: A => ST[S, B]): ST[S, B] =
@@ -130,12 +130,12 @@ object ST {
     new ST(Thunk.raiseError(x))
 
   def unsafeCapture[S, A](a: => Impure[A]): ST[S, A] =
-    new ST(Thunk.suspend(Op.Lift(() => a)))
+    new ST(Thunk.suspend(IOOp.Lift(() => a)))
 
-  private[this] val stInterpreter: Op[World.Local, ?] ~> Either[Throwable, ?] =
-    new (Op[World.Local, ?] ~> Either[Throwable, ?]) {
-      override def apply[B](op: Op[World.Local, B]): Either[Throwable, B] = op match {
-        case Op.Lift(f) => Either.catchNonFatal(f())
+  private[this] val stInterpreter: IOOp[World.Local, ?] ~> Either[Throwable, ?] =
+    new (IOOp[World.Local, ?] ~> Either[Throwable, ?]) {
+      override def apply[B](op: IOOp[World.Local, B]): Either[Throwable, B] = op match {
+        case IOOp.Lift(f) => Either.catchNonFatal(f())
       }
     }
 

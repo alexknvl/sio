@@ -14,12 +14,12 @@ object IO {
   def mutable[A](a: A): IOMutable[A] = new Mutable(a)
   def trace(s: String): IO[Unit] = IO { System.err.println(s) }
 
-  private[this] val ioInterpreter: Op[World.Real, ?] ~> Either[Throwable, ?] =
-    new (Op[World.Real, ?] ~> Either[Throwable, ?]) {
-      override def apply[B](op: Op[World.Real, B]): Either[Throwable, B] = op match {
-        case Op.Lift(f) =>
+  private[this] val ioInterpreter: IOOp[World.Real, ?] ~> Either[Throwable, ?] =
+    new (IOOp[World.Real, ?] ~> Either[Throwable, ?]) {
+      override def apply[B](op: IOOp[World.Real, B]): Either[Throwable, B] = op match {
+        case IOOp.Lift(f) =>
           Either.catchNonFatal(f())
-        case Op.Unlift(fa) =>
+        case IOOp.Unlift(fa) =>
           Either.right(() => unsafeRun(fa).fold(e => throw e, _ => ()))
       }
     }
