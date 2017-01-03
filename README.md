@@ -22,3 +22,27 @@ object App extends SafeApp {
 
 See more examples [here](https://github.com/alexknvl/sio/tree/master/example/src/main/scala).
 
+## Quick Start
+```scala
+resolvers += Resolver.bintrayRepo("alexknvl", "maven")
+
+libraryDependencies ++= ((version: String) => List(
+  // Core data types, including ST and IO
+  "com.alexknvl"  %%  "sio-core"           % version,
+  "com.alexknvl"  %%  "sio-concurrent"     % version,
+  // Iteratees
+  "com.alexknvl"  %%  "sio-iteratee"       % version,
+  "com.alexknvl"  %%  "sio-iteratee-files" % version,
+  "com.alexknvl"  %%  "sio-iteratee-gzip"  % version,
+  // Monadic Regions  
+  "com.alexknvl"  %%  "sio-regions"        % version,
+  // Eff monad similar to PureScript
+  "com.alexknvl"  %%  "sio-eff"            % version,
+  // putStrLn etc
+  "com.alexknvl"  %%  "sio-teletype"       % version))
+  .apply("0.2")
+```
+
+## License
+Code is provided under the MIT license available at https://opensource.org/licenses/MIT,
+as well as in the LICENSE file.
