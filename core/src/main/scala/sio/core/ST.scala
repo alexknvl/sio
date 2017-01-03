@@ -3,9 +3,9 @@ package sio.core
 import cats.data.EitherT
 import cats.syntax.either._
 import cats.~>
-import sio.base.free.FreeME
+import sio.core.detail.Thunk
 
-final case class ST[S, A](value: Thunk[S, A]) {
+final case class ST[S, A](value: Thunk[Op[S, ?], Throwable, Unit, A]) {
   def map[B](f: A => B): ST[S, B] =
     new ST(value.map(f))
   def flatMap[B](f: A => ST[S, B]): ST[S, B] =
@@ -130,14 +130,17 @@ object ST {
     new ST(Thunk.raiseError(x))
 
   def unsafeCapture[S, A](a: => Impure[A]): ST[S, A] =
-    new ST(Thunk.suspend(Op.Effect(() => a)))
+    new ST(Thunk.suspend(Op.Lift(() => a)))
+
+  private[this] val stInterpreter: Op[World.Local, ?] ~> Either[Throwable, ?] =
+    new (Op[World.Local, ?] ~> Either[Throwable, ?]) {
+      override def apply[B](op: Op[World.Local, B]): Either[Throwable, B] = op match {
+        case Op.Lift(f) => Either.catchNonFatal(f())
+      }
+    }
 
   def run[S, A](forallST: ForallST[A]): Either[Throwable, A] =
-    forallST.apply[World.Local].value.run(new (Op[World.Local, ?] ~> Either[Throwable, ?]) {
-      override def apply[B](op: Op[World.Local, B]): Either[Throwable, B] = op match {
-        case Op.Effect(f) => Either.catchNonFatal(f())
-      }
-    })
+    forallST.apply[World.Local].value.run(Either.right(()), stInterpreter)
 
   def trace[S](s: String): ST[S, Unit] =
     unsafeCapture { System.err.println(s) }

@@ -6,7 +6,6 @@ import cats.syntax.all._
 import cats.instances.list._
 import sio.base.Forall
 import sio.core._
-import sio.core.control._
 import sio.core.instances.all._
 import sio.core.syntax.io._
 

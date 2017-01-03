@@ -58,8 +58,13 @@ lazy val core = (project in file("core")).
   settings(name := "sio-core").
   settings(commonSettings: _*).
   settings(libraryDependencies ++=
-    catsLibraries ++
-    simulacrumLibrary)
+    catsLibraries ++ simulacrumLibrary)
+
+lazy val concurrent = (project in file("concurrent")).
+  settings(name := "sio-concurrent").
+  settings(commonSettings: _*).
+  settings(libraryDependencies ++=
+    catsLibraries ++ simulacrumLibrary)
 
 lazy val iteratee = (project in file("iteratee")).
   settings(name := "sio-iteratee").
@@ -113,7 +118,7 @@ lazy val root = (project in file(".")).
   settings(name := "sio").
   settings(commonSettings: _*).
   aggregate(
-    core,
+    core, concurrent,
     eff, regions,
     teletype,
     iteratee, iterateeFiles, iterateeGZip,

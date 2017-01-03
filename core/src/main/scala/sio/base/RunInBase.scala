@@ -1,4 +1,4 @@
-package sio.core.control
+package sio.base
 
 // type RunInBase m base = forall β. m β -> base (m β)
 trait RunInBase[M[_], Base[_]] {

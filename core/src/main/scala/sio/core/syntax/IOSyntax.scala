@@ -1,7 +1,7 @@
 package sio.core.syntax
 
-import sio.core.{IO, LiftIO}
-import sio.core.control.{RunInBase, MonadControlIO}
+import sio.base.RunInBase
+import sio.core.{MonadControlIO, IO, LiftIO}
 
 trait IOSyntax {
   implicit class IOSyntax[A] (val value: IO[A]) {

@@ -1,4 +1,4 @@
-package sio.core.control
+package sio.base
 
 import cats.Monad
 

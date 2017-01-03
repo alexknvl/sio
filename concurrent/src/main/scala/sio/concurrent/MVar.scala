@@ -1,6 +1,6 @@
-package sio.core
+package sio.concurrent
 
-import java.util.{ concurrent => C }
+import java.util.{concurrent => C}
 
 final class MVar[A](unsafeQueue: C.BlockingQueue[A]) {
   /**
