@@ -14,10 +14,6 @@ trait LiftIOInstances {
     def liftIO[A](a: IO[A]) = OptionT(F.liftIO(a.map(Some(_): Option[A])))
   }
 
-  implicit def xorTLiftIO[F[_], E](implicit F: LiftIO[F]): LiftIO[XorT[F, E, ?]] = new LiftIO[XorT[F, E, ?]] {
-    def liftIO[A](a: IO[A]) = XorT(F.liftIO(a.map(Xor.right[E, A])))
-  }
-
   implicit def eitherTLiftIO[F[_], E](implicit F: LiftIO[F]): LiftIO[EitherT[F, E, ?]] = new LiftIO[EitherT[F, E, ?]] {
     def liftIO[A](a: IO[A]) = EitherT(F.liftIO(a.map(Right[E, A])))
   }

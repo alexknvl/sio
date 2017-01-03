@@ -20,7 +20,7 @@ object IO {
         case IOOp.Lift(f) =>
           Either.catchNonFatal(f())
         case IOOp.Unlift(fa) =>
-          Either.right(() => unsafeRun(fa).fold(e => throw e, _ => ()))
+          Either.right[Throwable, B](() => unsafeRun(fa).fold(e => throw e, _ => ()))
       }
     }
 
@@ -32,5 +32,5 @@ object IO {
     * @return a value of type `A`.
     */
   def unsafeRun[A](io: IO[A]): Impure[Either[Throwable, A]] =
-    io.value.run(Right(()), ioInterpreter)
+    io.value.run(Either.right[Throwable, Unit](()), ioInterpreter)
 }

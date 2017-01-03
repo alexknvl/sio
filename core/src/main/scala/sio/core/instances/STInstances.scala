@@ -1,11 +1,11 @@
 package sio.core.instances
 
-import cats.{RecursiveTailRecM, MonadError}
+import cats.MonadError
 import sio.core.ST
 
 trait STInstances {
-  implicit def stMonadError[S]: MonadError[ST[S, ?], Throwable] with RecursiveTailRecM[ST[S, ?]] =
-    new MonadError[ST[S, ?], Throwable] with RecursiveTailRecM[ST[S, ?]] {
+  implicit def stMonadError[S]: MonadError[ST[S, ?], Throwable] =
+    new MonadError[ST[S, ?], Throwable] {
       override def pure[A](x: A): ST[S, A] = ST.pure(x)
       override def raiseError[A](e: Throwable): ST[S, A] = ST.raiseError(e)
 

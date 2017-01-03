@@ -1,6 +1,6 @@
 package sio.core.instances
 
-import cats.{RecursiveTailRecM, MonadError}
+import cats.MonadError
 import sio.base.RunInBase
 import sio.core._
 

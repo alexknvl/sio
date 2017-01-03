@@ -140,7 +140,7 @@ object ST {
     }
 
   def run[S, A](forallST: ForallST[A]): Either[Throwable, A] =
-    forallST.apply[World.Local].value.run(Either.right(()), stInterpreter)
+    forallST.apply[World.Local].value.run(Either.right[Throwable, Unit](()), stInterpreter)
 
   def trace[S](s: String): ST[S, Unit] =
     unsafeCapture { System.err.println(s) }
