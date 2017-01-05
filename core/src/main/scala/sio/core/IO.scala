@@ -36,7 +36,7 @@ object IO {
     * can be passed to impure methods. For this to be safe, the impure method
     * taking a callback must not let it escape outside the ST monad.
     */
-  def callback[A](action: IO[A]): IO[() => Impure[A]] = ST.unsafeCallback(action)
+  def callback[A, B](run: A => IO[B]): IO[A => Impure[B]] = ST.unsafeCallback(run)
 
   /** Prints a message to the standard error output. This function is intended
     * only for debugging and it is neither referentially transparent nor IO-free.
@@ -52,8 +52,8 @@ object IO {
       override def apply[B](op: IOOp[World.Real, B]): Either[Throwable, B] = op match {
         case IOOp.Lift(f) =>
           Either.catchNonFatal(f())
-        case IOOp.Unlift(fa) =>
-          Either.right[Throwable, B](() => unsafeRun(fa))
+        case unlift: IOOp.Unlift[World.Real, f, t] =>
+          Either.right[Throwable, B]((x: f) => unsafeRun(unlift.run(x)))
       }
     }
 

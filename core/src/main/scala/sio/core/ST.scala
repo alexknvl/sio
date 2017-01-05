@@ -23,6 +23,9 @@ final case class ST[S, A](value: Thunk[IOOp[S, ?], Throwable, Unit, A]) {
   def liftMap[B](f: A => Impure[B]): ST[S, B] =
     flatMap(a => ST.unsafeCapture(f(a)))
 
+  @inline private[ST] def castST[S1]: ST[S1, A] =
+    this.asInstanceOf[ST[S1, A]]
+
   /** This method allows you to convert an `ST` computation into a callback that
     * can be passed to impure methods. For this to be safe, the impure method
     * taking a callback must not let it escape outside the `ST` monad.
@@ -33,7 +36,9 @@ final case class ST[S, A](value: Thunk[IOOp[S, ?], Throwable, Unit, A]) {
     */
   def asCallback(implicit ev: S =:= World.Real): IO[() => Impure[A]] = {
     // FIXME: https://github.com/scala/scala/pull/5623
-    ST.unsafeCallback(this).asInstanceOf[IO[() => Impure[A]]]
+    ST.unsafeCallback { (_: Unit) => this }
+      .map(f => () => f(()))
+      .castST[World.Real]
   }
 
   /** This method allows you to convert an `ST` computation into a [[Runnable]] that
@@ -175,8 +180,8 @@ object ST {
     * can be passed to impure methods. For this to be safe, the impure method
     * taking a callback must not let it escape outside the ST monad.
     */
-  def unsafeCallback[S, A](action: ST[S, A]): ST[S, () => Impure[A]] =
-    new ST(Thunk.suspend[IOOp[S, ?], Throwable, () => Impure[A]](IOOp.Unlift(action)))
+  def unsafeCallback[S, A, B](action: A => ST[S, B]): ST[S, A => Impure[B]] =
+    new ST(Thunk.suspend[IOOp[S, ?], Throwable, A => Impure[B]](IOOp.Unlift(action)))
 
   /** Prints a message to the standard error output. This function is intended
     * only for debugging and it is neither referentially transparent nor IO-free.
@@ -196,8 +201,8 @@ object ST {
       override def apply[B](op: IOOp[World.Local, B]): Either[Throwable, B] = op match {
         case IOOp.Lift(f) =>
           Either.catchNonFatal(f())
-        case IOOp.Unlift(fa) =>
-          Either.right[Throwable, B](() => unsafeRun(fa))
+        case unlift: IOOp.Unlift[World.Local, f, t] =>
+          Either.right[Throwable, B]((x: f) => unsafeRun(unlift.run(x)))
       }
     }
 
