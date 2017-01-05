@@ -7,7 +7,7 @@ trait STInstances {
   implicit def stMonadError[S]: MonadError[ST[S, ?], Throwable] =
     new MonadError[ST[S, ?], Throwable] {
       override def pure[A](x: A): ST[S, A] = ST.pure(x)
-      override def raiseError[A](e: Throwable): ST[S, A] = ST.raiseError(e)
+      override def raiseError[A](e: Throwable): ST[S, A] = ST.raise(e)
 
       override def map[A, B](fa: ST[S, A])(f: A => B): ST[S, B] =
         new ST(fa.value.map(f))

@@ -14,7 +14,7 @@ object st {
   } yield (first, second)
 
   def run: IO[Unit] = {
-    val x = ST.run(new ForallST[(Int, Int)] { def apply[A]: ST[A, (Int, Int)] = calculate })
+    val x = ST.unsafeRun(new ForallST[(Int, Int)] { def apply[A]: ST[A, (Int, Int)] = calculate })
     putStrLn(x.toString)
   }
 }

@@ -61,6 +61,6 @@ object Thunk {
     one(Op.Pure[F, E, Unit, A](Right(x)))
   def suspend[F[_], E, A](x: F[A]): Thunk[F, E, Unit, A] =
     one(Op.Suspend[F, E, Unit, A](x))
-  def raiseError[F[_], E, A](e: E): Thunk[F, E, Unit, A] =
+  def raise[F[_], E, A](e: E): Thunk[F, E, Unit, A] =
     one(Op.Pure(Left(e)))
 }

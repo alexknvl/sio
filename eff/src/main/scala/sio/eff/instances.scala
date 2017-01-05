@@ -11,7 +11,7 @@ object instances {
     override def pure[A](x: A): EffIO[E, A] =
       EffIO.pure(x)
     override def raiseError[A](e: Throwable): EffIO[E, A] =
-      EffIO.lift(IO.raiseError(e))
+      EffIO.lift(IO.raise(e))
     override def map[A, B](fa: EffIO[E, A])(f: A => B): EffIO[E, B] =
       fa.map(f)
     override def flatMap[A, B](fa: EffIO[E, A])(f: A => EffIO[E, B]): EffIO[E, B] =

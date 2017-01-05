@@ -18,16 +18,16 @@ final class EffIO[E <: !!, A] private (val runEff: IO[A]) {
     new EffIO(runEff)
 
   def ensure(error: => Throwable)(predicate: A => Boolean): EffIO[E, A] =
-    new EffIO(runEff.flatMap(a => if (predicate(a)) IO.pure(a) else IO.raiseError(error)))
+    new EffIO(runEff.flatMap(a => if (predicate(a)) IO.pure(a) else IO.raise(error)))
 
   def attempt: EffIO[E, Either[Throwable, A]] =
     new EffIO(runEff.map(Either.right[Throwable, A]).handleErrorWith(e => IO.pure(Either.left(e))))
 
   def recover(pf: PartialFunction[Throwable, A]): EffIO[E, A] =
-    new EffIO(runEff.handleErrorWith(e => (pf andThen IO.pure) applyOrElse(e, IO.raiseError)))
+    new EffIO(runEff.handleErrorWith(e => (pf andThen IO.pure) applyOrElse(e, IO.raise)))
 
   def recoverWith[F <: !!, G <: !!](pf: PartialFunction[Throwable, EffIO[F, A]])(implicit U: Union[E, F, G]): EffIO[G, A] =
-    new EffIO(runEff.handleErrorWith(e => (pf andThen (x => x.runEff)) applyOrElse(e, IO.raiseError)))
+    new EffIO(runEff.handleErrorWith(e => (pf andThen (x => x.runEff)) applyOrElse(e, IO.raise)))
 
   def >>[F <: !!, G <: !!, B](next: => EffIO[F, B])(implicit u: Union[E, F, G]): EffIO[G, B] =
     new EffIO(runEff.flatMap(a => next.runEff))
