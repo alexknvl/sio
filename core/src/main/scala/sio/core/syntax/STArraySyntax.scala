@@ -9,7 +9,7 @@ import scala.util.Sorting
 
 trait STArraySyntax {
   implicit class STArraySyntax[S, E](handle: STArray[S, E]) extends Mutable.Syntax(handle) {
-    def length: ST[S, Int] = lift { _.length }
+    def length: Int = unsafePure { _.length }
 
     def get(i: Int): ST[S, E] = lift { _.apply(i) }
     def set(i: Int, x: E): ST[S, Unit] = lift { _.update(i, x) }

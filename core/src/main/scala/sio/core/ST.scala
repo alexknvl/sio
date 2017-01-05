@@ -20,6 +20,9 @@ final case class ST[S, A](value: Thunk[IOOp[S, ?], Throwable, Unit, A]) {
   def handleErrorWith(f: Throwable => ST[S, A]): ST[S, A] =
     new ST(value.handleErrorWith(x => f(x).value))
 
+  def liftMap[B](f: A => Impure[B]): ST[S, B] =
+    flatMap(a => ST.unsafeCapture(f(a)))
+
   /** This method allows you to convert an `ST` computation into a callback that
     * can be passed to impure methods. For this to be safe, the impure method
     * taking a callback must not let it escape outside the `ST` monad.

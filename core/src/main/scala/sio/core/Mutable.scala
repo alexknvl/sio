@@ -7,12 +7,8 @@ final class Mutable[S, A](val unsafeValue: A) {
 
 object Mutable {
   abstract class Syntax[S, A](val handle: Mutable[S, A]) {
-    final def lift[B](f: A => Impure[B]): ST[S, B] = ST.unsafeCapture { f(handle.unsafeValue) }
-    final def unit[B](f: A => Impure[B]): ST[S, Unit] = ST.unsafeCapture { f(handle.unsafeValue); () }
-  }
-
-  abstract class IOSyntax[A](val handle: IOMutable[A]) {
-    final def lift[B](f: A => Impure[B]): IO[B] = IO { f(handle.unsafeValue) }
-    final def unit[B](f: A => Impure[B]): IO[Unit] = IO { f(handle.unsafeValue); () }
+    @inline final def lift[B](f: A => Impure[B]): ST[S, B] = ST.unsafeCapture { f(handle.unsafeValue) }
+    @inline final def unit[B](f: A => Impure[B]): ST[S, Unit] = ST.unsafeCapture { f(handle.unsafeValue); () }
+    @inline final def unsafePure[B](f: A => B): B = f(handle.unsafeValue)
   }
 }
