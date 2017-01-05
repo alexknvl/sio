@@ -1,5 +1,7 @@
 package sio.core
 
+import java.util.concurrent.Callable
+
 import cats.data.EitherT
 import cats.syntax.either._
 import cats.~>
@@ -22,12 +24,34 @@ final case class ST[S, A](value: Thunk[IOOp[S, ?], Throwable, Unit, A]) {
     * can be passed to impure methods. For this to be safe, the impure method
     * taking a callback must not let it escape outside the `ST` monad.
     *
-    * @see [[ST.unsafeUnlift]]
+    * @see [[ST.unsafeCallback]]
+    * @see [[asRunnable]]
+    * @see [[asCallable]]
     */
-  def unlift(implicit ev: S =:= World.Real): IO[() => Impure[A]] = {
+  def asCallback(implicit ev: S =:= World.Real): IO[() => Impure[A]] = {
     // FIXME: https://github.com/scala/scala/pull/5623
-    ST.unsafeUnlift(this).asInstanceOf[IO[() => Impure[A]]]
+    ST.unsafeCallback(this).asInstanceOf[IO[() => Impure[A]]]
   }
+
+  /** This method allows you to convert an `ST` computation into a [[Runnable]] that
+    * can be passed to impure methods. For this to be safe, the impure method
+    * taking a `Runnable` must not let it escape outside the `ST` monad.
+    *
+    * @see [[asCallback]]
+    * @see [[asCallable]]
+    */
+  def asRunnable(implicit ev: S =:= World.Real): IO[Runnable] =
+    asCallback(ev).map(f => new Runnable { override def run(): Unit = f() })
+
+  /** This method allows you to convert an `ST` computation into a [[Callable]] that
+    * can be passed to impure methods. For this to be safe, the impure method
+    * taking a `Callable` must not let it escape outside the `ST` monad.
+    *
+    * @see [[asCallback]]
+    * @see [[asRunnable]]
+    */
+  def asCallable(implicit ev: S =:= World.Real): IO[Callable[A]] =
+    asCallback(ev).map(f => new Callable[A] { override def call(): A = f() })
 
   /** Handle any error, by mapping it to an `A` value.
     *
@@ -148,7 +172,7 @@ object ST {
     * can be passed to impure methods. For this to be safe, the impure method
     * taking a callback must not let it escape outside the ST monad.
     */
-  def unsafeUnlift[S, A](action: ST[S, A]): ST[S, () => Impure[A]] =
+  def unsafeCallback[S, A](action: ST[S, A]): ST[S, () => Impure[A]] =
     new ST(Thunk.suspend[IOOp[S, ?], Throwable, () => Impure[A]](IOOp.Unlift(action)))
 
   /** Prints a message to the standard error output. This function is intended

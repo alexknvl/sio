@@ -36,7 +36,7 @@ object IO {
     * can be passed to impure methods. For this to be safe, the impure method
     * taking a callback must not let it escape outside the ST monad.
     */
-  def unlift[A](action: IO[A]): IO[() => Impure[A]] = ST.unsafeUnlift(action)
+  def callback[A](action: IO[A]): IO[() => Impure[A]] = ST.unsafeCallback(action)
 
   /** Prints a message to the standard error output. This function is intended
     * only for debugging and it is neither referentially transparent nor IO-free.
