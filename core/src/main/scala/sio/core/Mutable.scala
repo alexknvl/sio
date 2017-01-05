@@ -1,6 +1,6 @@
 package sio.core
 
-final class Mutable[S, A](val unsafeValue: A) {
+final class Mutable[S, A](val unsafeValue: A) extends AnyVal {
   def id: String = super.toString.dropWhile(_ != '@').tail
   override def toString: String = s"Mutable[${unsafeValue.getClass.getSimpleName}]@$id"
 }
