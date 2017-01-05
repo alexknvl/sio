@@ -20,9 +20,12 @@ object IO {
         case IOOp.Lift(f) =>
           Either.catchNonFatal(f())
         case IOOp.Unlift(fa) =>
-          Either.right[Throwable, B](() => unsafeRun(fa).fold(e => throw e, _ => ()))
+          Either.right[Throwable, B](() => unsafeRun(fa))
       }
     }
+
+  def unsafeAttempt[A](io: IO[A]): Impure[Either[Throwable, A]] =
+    io.value.run(Either.right[Throwable, Unit](()), ioInterpreter)
 
   /**
     * This is the "back door" into the IO monad, allowing IO computation
@@ -31,6 +34,6 @@ object IO {
     *
     * @return a value of type `A`.
     */
-  def unsafeRun[A](io: IO[A]): Impure[Either[Throwable, A]] =
-    io.value.run(Either.right[Throwable, Unit](()), ioInterpreter)
+  def unsafeRun[A](io: IO[A]): Impure[A] =
+    unsafeAttempt(io).fold(e => throw e, identity)
 }
