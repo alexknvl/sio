@@ -40,7 +40,7 @@ libraryDependencies ++= ((version: String) => List(
   "com.alexknvl"  %%  "sio-eff"            % version,
   // putStrLn etc
   "com.alexknvl"  %%  "sio-teletype"       % version))
-  .apply("0.2")
+  .apply("0.2.1")
 ```
 
 ## License
