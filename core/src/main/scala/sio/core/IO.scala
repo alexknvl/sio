@@ -2,6 +2,7 @@ package sio.core
 
 import cats.~>
 import cats.syntax.either._
+import cats.instances.either._
 
 object IO {
   /** Creates an IO action that produces a unit value without performing
@@ -66,7 +67,7 @@ object IO {
     * @see unsafeRun
     */
   def unsafeAttempt[A](io: IO[A]): Impure[Either[Throwable, A]] =
-    io.value.run(Either.right[Throwable, Unit](()), ioInterpreter)
+    io.value.go(ioInterpreter)
 
   /**
     * This is the "back door" into the IO monad, allowing IO computation

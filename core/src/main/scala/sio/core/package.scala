@@ -1,7 +1,7 @@
 package sio
 
 import cats.Id
-import sio.base.Forall
+import leibniz.Forall
 
 package object core {
   type Impure[A] = Id[A]

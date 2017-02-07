@@ -4,7 +4,7 @@ import cats.Monad
 import cats.data.{ReaderT, Kleisli}
 import cats.syntax.all._
 import cats.instances.list._
-import sio.base.Forall
+import leibniz.Forall
 import sio.core._
 import sio.core.instances.all._
 import sio.core.syntax.io._
