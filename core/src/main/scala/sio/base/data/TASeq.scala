@@ -1,6 +1,6 @@
 package sio.base.data
 
-import leibniz.{Leibniz, ===}
+import leibniz.{Is, ===}
 
 final case class TASeq[F[_, _], A, B](seq: Catenable[F[Any, Any]]) { ab =>
   def ++[C](bc: TASeq[F, A, C]): TASeq[F, A, C] =
@@ -13,7 +13,7 @@ final case class TASeq[F[_, _], A, B](seq: Catenable[F[Any, Any]]) { ab =>
   def uncons: Either[A === B, (F[A, Any], TASeq[F, Any, B])] =
     seq.uncons match {
       case None =>
-        Left(Leibniz.unsafeForce)
+        Left(Is.unsafeForce[A, B])
       case Some((h, t)) =>
         Right((h.asInstanceOf[F[A, Any]], TASeq[F, Any, B](t)))
     }
