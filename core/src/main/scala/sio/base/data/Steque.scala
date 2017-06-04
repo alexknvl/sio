@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 package sio.base.data
 
-import Catenable._
+import Steque._
 
 /**
   * Trivial catenable sequence. Supports O(1) append, and (amortized)
@@ -30,14 +30,14 @@ import Catenable._
   * steps takes O(N). Like a difference list, conversion to a `Seq[A]`
   * takes linear time, regardless of how the sequence is built up.
   */
-sealed abstract class Catenable[+A] {
+sealed abstract class Steque[+A] {
   /**
     * Returns the head and tail of this catenable if non empty, none otherwise. Amortized O(1).
     */
-  final def uncons: Option[(A, Catenable[A])] = {
-    var c: Catenable[A] = this
-    val rights = new collection.mutable.ArrayBuffer[Catenable[A]]
-    var result: Option[(A, Catenable[A])] = null
+  final def uncons: Option[(A, Steque[A])] = {
+    var c: Steque[A] = this
+    val rights = new collection.mutable.ArrayBuffer[Steque[A]]
+    var result: Option[(A, Steque[A])] = null
     while (result eq null) {
       c match {
         case Empty =>
@@ -64,38 +64,38 @@ sealed abstract class Catenable[+A] {
   /**
     * Concatenates this with `c` in O(1) runtime.
     */
-  final def ++[B >: A](c: Catenable[B]): Catenable[B] =
+  final def ++[B >: A](c: Steque[B]): Steque[B] =
     append(this, c)
 
   /**
     * Returns a new catenable consisting of `a` followed by this.
     * O(1) runtime.
     */
-  final def cons[B >: A](a: B): Catenable[B] =
+  final def cons[B >: A](a: B): Steque[B] =
     append(single(a), this)
 
   /** Alias for [[cons]]. */
-  final def +:[B >: A](a: B): Catenable[B] =
+  final def +:[B >: A](a: B): Steque[B] =
     cons(a)
 
   /**
     * Returns a new catenable consisting of this followed by `a`.
     * O(1) runtime.
     */
-  final def snoc[B >: A](a: B): Catenable[B] =
+  final def snoc[B >: A](a: B): Steque[B] =
     append(this, single(a))
 
   /**
     * Alias for [[snoc]].
     */
-  final def :+[B >: A](a: B): Catenable[B] =
+  final def :+[B >: A](a: B): Steque[B] =
     snoc(a)
 
   /**
     * Applies the supplied function to each element and returns a new catenable.
     */
-  final def map[B](f: A => B): Catenable[B] =
-    foldLeft(empty: Catenable[B])((acc, a) => acc :+ f(a))
+  final def map[B](f: A => B): Steque[B] =
+    foldLeft(empty: Steque[B])((acc, a) => acc :+ f(a))
 
   /**
     * Folds over the elements from left to right using the supplied
@@ -111,8 +111,8 @@ sealed abstract class Catenable[+A] {
     * Applies the supplied function to each element, left to right.
     */
   final def foreach(f: A => Unit): Unit = {
-    var c: Catenable[A] = this
-    val rights = new collection.mutable.ArrayBuffer[Catenable[A]]
+    var c: Steque[A] = this
+    val rights = new collection.mutable.ArrayBuffer[Steque[A]]
     while (c ne null) {
       c match {
         case Empty =>
@@ -143,43 +143,43 @@ sealed abstract class Catenable[+A] {
   override def toString = "Catenable(..)"
 }
 
-object Catenable {
-  private case object Empty extends Catenable[Nothing] {
+object Steque {
+  private case object Empty extends Steque[Nothing] {
     def isEmpty: Boolean = true
   }
-  private final case class Single[A](a: A) extends Catenable[A] {
+  private final case class Single[A](a: A) extends Steque[A] {
     def isEmpty: Boolean = false
   }
-  private final case class Append[A](left: Catenable[A], right: Catenable[A]) extends Catenable[A] {
+  private final case class Append[A](left: Steque[A], right: Steque[A]) extends Steque[A] {
     def isEmpty: Boolean = false // b/c `append` constructor doesn't allow either branch to be empty
   }
 
   /** Empty catenable. */
-  val empty: Catenable[Nothing] = Empty
+  val empty: Steque[Nothing] = Empty
 
   /** Creates a catenable of 1 element. */
-  def single[A](a: A): Catenable[A] = Single(a)
+  def single[A](a: A): Steque[A] = Single(a)
 
   /** Appends two catenables. */
-  def append[A](c: Catenable[A], c2: Catenable[A]): Catenable[A] =
+  def append[A](c: Steque[A], c2: Steque[A]): Steque[A] =
     if (c.isEmpty) c2
     else if (c2.isEmpty) c
     else Append(c, c2)
 
   /** Creates a catenable from the specified sequence. */
-  def fromSeq[A](s: Seq[A]): Catenable[A] =
+  def fromSeq[A](s: Seq[A]): Steque[A] =
     if (s.isEmpty) empty
     else s.view.reverse.map(single).reduceLeft((x, y) => Append(y, x))
 
   /** Creates a catenable from the specified elements. */
-  def apply[A](as: A*): Catenable[A] = {
+  def apply[A](as: A*): Steque[A] = {
     as match {
       case w: collection.mutable.WrappedArray[A] =>
         if (w.isEmpty) empty
         else if (w.size == 1) single(w.head)
         else {
           val arr: Array[A] = w.array
-          var c: Catenable[A] = single(arr.last)
+          var c: Steque[A] = single(arr.last)
           var idx = arr.length - 2
           while (idx >= 0) {
             c = Append(single(arr(idx)), c)

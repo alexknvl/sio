@@ -18,12 +18,12 @@ object `package` {
 
   type TASeq[F[_, _], A, B] = TASeq.T[F, A, B]
   val TASeq: TASeqImpl = new TASeqImpl {
-    type T[F[_, _], A, B] = Catenable[F[Any, Any]]
+    type T[F[_, _], A, B] = Steque[F[Any, Any]]
 
     def empty[F[_, _], A]: T[F, A, A] =
-      Catenable.empty
+      Steque.empty
     def single[F[_, _], A, B](ab: F[A, B]): T[F, A, B] =
-      Catenable.single(ab.asInstanceOf[F[Any, Any]])
+      Steque.single(ab.asInstanceOf[F[Any, Any]])
 
     def concat[F[_, _], A, B, C](ab: T[F, A, B])(bc: T[F, A, C]): T[F, A, C] =
       ab ++ bc
