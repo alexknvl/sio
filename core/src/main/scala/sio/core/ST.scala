@@ -17,16 +17,16 @@ final case class ST[S, A](value: FreeRM[Either[Throwable, ?], IOOp[S, ?], A]) {
   private[this] type F[X] = IOOp[S, X]
 
   def map[B](f: A => B): ST[S, B] =
-    new ST(value.map(f))
+    new ST(FreeRM.map(value)(f))
 
   def flatMap[B](f: A => ST[S, B]): ST[S, B] =
-    new ST(value.bind {
+    new ST(FreeRM.bind(value) {
       case Left(x) => FreeRM.pure[I, F, B](Left(x))
       case Right(x) => f(x).value
     })
 
   def handleErrorWith(f: Throwable => ST[S, A]): ST[S, A] =
-    new ST(value.bind {
+    new ST(FreeRM.bind(value) {
       case Left(x) => f(x).value
       case Right(x) => FreeRM.pure[I, F, A](Right(x))
     })
@@ -210,7 +210,8 @@ object ST {
   private[this] val stInterpreter: IOOp[World.Local, ?] ~> Either[Throwable, ?] =
     new (IOOp[World.Local, ?] ~> Either[Throwable, ?]) {
       def unsafeAttempt[A](io: ST[World.Local, A]): Impure[Either[Throwable, A]] =
-        io.value.go(stInterpreter)
+        FreeRM.foldMap[Either[Throwable, ?], IOOp[World.Local, ?], A](
+          io.value, stInterpreter)
       def unsafeRun[A](io: ST[World.Local, A]): Impure[A] =
         unsafeAttempt(io).fold(e => throw e, identity)
 
@@ -229,7 +230,8 @@ object ST {
     * @see [[unsafeRun]]
     */
   def attempt[A](forallST: ForallST[A]): Either[Throwable, A] =
-    forallST.apply[World.Local].value.go(stInterpreter)
+    FreeRM.foldMap[Either[Throwable, ?], IOOp[World.Local, ?], A](
+      forallST.apply[World.Local].value, stInterpreter)
 
   /** Return the value computed by a state transformer computation.
     * The [[ForallST]] ensures that the internal state used by the ST computation

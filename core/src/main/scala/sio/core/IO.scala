@@ -4,6 +4,8 @@ import cats.~>
 import cats.syntax.either._
 import cats.instances.either._
 
+import sio.base.free.FreeRM
+
 object IO {
   /** Creates an IO action that produces a unit value without performing
     * any side-effects.
@@ -67,7 +69,7 @@ object IO {
     * @see unsafeRun
     */
   def unsafeAttempt[A](io: IO[A]): Impure[Either[Throwable, A]] =
-    io.value.go(ioInterpreter)
+    FreeRM.foldMap[Either[Throwable, ?], IOOp[World.Real, ?], A](io.value, ioInterpreter)
 
   /**
     * This is the "back door" into the IO monad, allowing IO computation
