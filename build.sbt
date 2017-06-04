@@ -1,6 +1,6 @@
 lazy val commonSettings = List(
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
-  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+  addCompilerPlugin(Libraries.paradise),
   organization := "com.alexknvl",
   version := "0.3.0",
   scalaVersion := "2.12.1",
@@ -17,18 +17,21 @@ lazy val commonSettings = List(
   resolvers ++= List(
     Resolver.mavenLocal,
     Resolver.sonatypeRepo("snapshots"),
-    Resolver.sonatypeRepo("releases"))
+    Resolver.sonatypeRepo("releases"),
+    Resolver.bintrayRepo("alexknvl", "maven"))
 )
 
 lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
   .settings(
     name := "sio-core",
+    publishArtifact in (Compile, packageDoc) := false,
     libraryDependencies
       ++= Libraries.cats
       ++ Libraries.simulacrum
       ++ Libraries.leibniz
-      ++ Libraries.sourcecode)
+      ++ Libraries.sourcecode
+      ++ Libraries.newts)
 
 lazy val concurrent = (project in file("concurrent"))
   .settings(commonSettings: _*)

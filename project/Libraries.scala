@@ -1,6 +1,8 @@
 import sbt._
 
 object Libraries {
+  val paradise    : ModuleID       =      "org.scalameta"        %  "paradise"   % "3.0.0-M8" cross CrossVersion.full
+
   val scalacheck = List("org.scalacheck"       %% "scalacheck" % "1.13.5" % "test")
   val discipline = List("org.typelevel"        %% "discipline" % "0.7.3"  % "test")
   val scalatest  = List("org.scalatest"        %% "scalatest"  % "3.0.3"  % "test")
@@ -12,12 +14,14 @@ object Libraries {
   val cats       = List("org.typelevel"        %% "cats"       % "0.9.0")
   val simulacrum = List("com.github.mpilquist" %% "simulacrum" % "0.10.0")
   val shapeless  = List("com.chuusai"          %% "shapeless"  % "2.3.2")
-  val leibniz    = List("com.alexknvl"         %% "leibniz"    % "0.3.2")
   val sourcecode = List("com.lihaoyi"          %% "sourcecode" % "0.1.3")
   val eff        = List("org.atnos"            %% "eff"        % "4.3.1")
   val refined    = List("eu.timepit"           %% "refined"    % "0.8.0")
 
   val junicode   = List("gcardone"             %  "junidecode" % "0.2")
+
+  val leibniz    = List("com.alexknvl"         %% "leibniz"    % "0.3.2")
+  val newts      = List("com.alexknvl"         %% "newtypes"   % "0.0.2")
 
   val iteratee = List(
     "io.iteratee"  %%  "iteratee-core",
