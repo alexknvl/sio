@@ -46,7 +46,7 @@ object IO {
     */
   def trace(s: String): IO[Unit] = IO { System.err.println(s) }
 
-  def mutable[A](a: A): IOMutable[A] = sio.core.MutableImpl.wrap(a)
+  def mutable[A](a: A): IOMutable[A] = sio.core.Mutable.wrap(a)
 
   private[this] val ioInterpreter: IOOp[World.Real, ?] ~> Either[Throwable, ?] =
     new (IOOp[World.Real, ?] ~> Either[Throwable, ?]) {

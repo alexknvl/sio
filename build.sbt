@@ -2,7 +2,7 @@ lazy val commonSettings = List(
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
   addCompilerPlugin(Libraries.paradise),
   organization := "com.alexknvl",
-  version := "0.3.0",
+  version := "0.3.1",
   scalaVersion := "2.12.1",
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   scalacOptions ++= List(
@@ -25,13 +25,11 @@ lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
   .settings(
     name := "sio-core",
-    publishArtifact in (Compile, packageDoc) := false,
     libraryDependencies
       ++= Libraries.cats
       ++ Libraries.simulacrum
       ++ Libraries.leibniz
-      ++ Libraries.sourcecode
-      ++ Libraries.newts)
+      ++ Libraries.sourcecode)
 
 lazy val concurrent = (project in file("concurrent"))
   .settings(commonSettings: _*)

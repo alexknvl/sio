@@ -1,12 +1,9 @@
-package sio
+package sio.core
 
-import cats.Id
 import leibniz.Forall
 
-package object core {
-  type Impure[A] = Id[A]
-
-  type Mutable[S, A] = MutableImpl.T[S, A]
+object `package` {
+  type Impure[+A] = A
 
   trait MutableImpl {
     type T[S, A]
@@ -14,12 +11,13 @@ package object core {
     def unwrap[S, A](tsa: T[S, A]): A
     def subst[F[_], S, A](fa: F[A]): F[T[S, A]]
   }
-  val MutableImpl: MutableImpl = new MutableImpl {
+  final val Mutable: MutableImpl = new MutableImpl {
     type T[S, A] = A
     def wrap[S, A](a: A): T[S, A] = a
     def unwrap[S, A](tsa: T[S, A]): A = tsa
     def subst[F[_], S, A](fa: F[A]): F[T[S, A]] = fa
   }
+  type Mutable[S, A] = Mutable.T[S, A]
 
   type IO[A] = ST[World.Real, A]
 
