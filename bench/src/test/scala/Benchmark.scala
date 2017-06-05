@@ -13,6 +13,17 @@ object Benchmark extends Bench.LocalTime {
     else (pure(n - 1) + pure(n - 2)) % 10
   }
 
+  final case class Wrapped(value: Int) extends AnyVal {
+    def +(that: Wrapped): Wrapped = Wrapped(this.value + that.value)
+    def %(that: Int): Wrapped = Wrapped(this.value % that)
+  }
+
+  def wrapped(n: Int): Wrapped = {
+    if (n == 0) Wrapped(0)
+    else if (n == 1) Wrapped(1)
+    else (wrapped(n - 1) + wrapped(n - 2)) % 10
+  }
+
   def opt(n: Int): Option[Int] = {
     if (n == 0) Some(0)
     else if (n == 1) Some(1)
@@ -42,8 +53,8 @@ object Benchmark extends Bench.LocalTime {
   }
 
   def fs2Task(n: Int): Task[Int] = {
-    if (n == 0) Task.delay(0)
-    else if (n == 1) Task.delay(1)
+    if (n == 0) Task.now(0)
+    else if (n == 1) Task.now(1)
     else for {
       a <- fs2Task(n - 1)
       b <- fs2Task(n - 2)
@@ -54,6 +65,12 @@ object Benchmark extends Bench.LocalTime {
     measure method "pure" in {
       using (sizes) in { a =>
         pure(a)
+      }
+    }
+
+    measure method "wrapped" in {
+      using (sizes) in { a =>
+        wrapped(a)
       }
     }
 

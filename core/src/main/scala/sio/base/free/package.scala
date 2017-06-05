@@ -152,7 +152,6 @@ object `package` {
   type RealIO[+A] = RealIO.T[A]
   val RealIO: RealIOImpl = new RealIOImpl {
     sealed abstract class Thunk
-    final case object Unit extends Thunk
     final case class Raise[A](e: Throwable) extends Thunk
     final case class Map[A](f: Any => Any, tail: Any) extends Thunk
     final case class Bind[A](f: Any => Thunk, tail: Any) extends Thunk
@@ -160,7 +159,7 @@ object `package` {
 
     type T[+A] = Any
 
-    @inline final val unit: T[Unit] = Unit
+    @inline final val unit: T[Unit] = ()
     @inline final def pure[A](a: A): T[A] = a // Pure(a)
     @inline final def raise(e: Throwable): T[Nothing] = Raise(e)
 
@@ -171,12 +170,11 @@ object `package` {
     @inline final def handle[A](fa: T[A])(f: Throwable => T[A]): T[A] =
       new Handle(f.asInstanceOf[Throwable => Any], fa)
 
-    @inline final val OP_UNIT   = 0
-    @inline final val OP_PURE   = 1
-    @inline final val OP_RAISE  = 2
-    @inline final val OP_MAP    = 3
-    @inline final val OP_BIND   = 4
-    @inline final val OP_HANDLE = 5
+    @inline final val OP_PURE   = 0
+    @inline final val OP_RAISE  = 1
+    @inline final val OP_MAP    = 2
+    @inline final val OP_BIND   = 3
+    @inline final val OP_HANDLE = 4
 
     @inline final def run[A](action: T[A]): Either[Throwable, A] = {
       var queue = Array.ofDim[Any](16)
@@ -200,8 +198,8 @@ object `package` {
       }
 
       @tailrec def enqueue(l: Any): Unit = l match {
-        case Unit => append(OP_UNIT, null)
-        case Raise(x) => append(OP_RAISE, x)
+        case Raise(x) =>
+          append(OP_RAISE, x)
         case Map(f, t) =>
           append(OP_MAP, f)
           enqueue(t)
@@ -227,8 +225,6 @@ object `package` {
             last -= 1
 
             op match {
-              case OP_UNIT =>
-                result = ()
               case OP_PURE =>
                 result = q
               case OP_RAISE =>
