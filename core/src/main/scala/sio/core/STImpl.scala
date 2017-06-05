@@ -1,12 +1,6 @@
 package sio.core
 
-import java.util.concurrent.Callable
-
-import cats.data.EitherT
-import cats.syntax.either._
-import cats.instances.either._
-import cats.~>
-import leibniz.{===, Forall}
+import leibniz.Forall
 
 /** The strict state-transformer monad. A computation of type `ST[S, A]`
   * transforms an internal state indexed by `S`, and returns a value of type `A`.

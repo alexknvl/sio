@@ -4,8 +4,6 @@ import cats.~>
 import cats.syntax.either._
 import cats.instances.either._
 
-import sio.base.free.FreeRM
-
 object IO {
   /** Creates an IO action that produces a unit value without performing
     * any side-effects.

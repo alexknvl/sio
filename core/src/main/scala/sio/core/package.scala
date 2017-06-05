@@ -16,46 +16,46 @@ object `package` {
     type F[A] = () => A
     type T[S, +A] = RealIO[A]
 
-    def unit[S]: T[S, Unit] =
+    final def unit[S]: T[S, Unit] =
       RealIO.unit
-    def pure[S, A](x: A): T[S, A] =
+    final def pure[S, A](x: A): T[S, A] =
       RealIO.pure[A](x)
-    def raise[S](x: Throwable): T[S, Nothing] =
+    final def raise[S](x: Throwable): T[S, Nothing] =
       RealIO.raise(x)
 
-    def map[S, A, B](fa: T[S, A], f: A => B): T[S, B] =
+    final def map[S, A, B](fa: T[S, A], f: A => B): T[S, B] =
       RealIO.map[A, B](fa)(f)
-    def flatMap[S, A, B](fa: T[S, A], f: A => T[S, B]): T[S, B] =
+    final def flatMap[S, A, B](fa: T[S, A], f: A => T[S, B]): T[S, B] =
       RealIO.flatMap[A, B](fa)(f)
-    def handleErrorWith[S, A](fa: T[S, A], f: Throwable => T[S, A]): T[S, A] =
+    final def handleErrorWith[S, A](fa: T[S, A], f: Throwable => T[S, A]): T[S, A] =
       RealIO.handle[A](fa)(f)
 
-    def unsafeCapture[S, A](a: => Impure[A]): T[S, A] =
+    final def unsafeCapture[S, A](a: => Impure[A]): T[S, A] =
       RealIO.map(RealIO.unit)(_ => a)
 
-    def unsafeCallback[S, A, B](action: A => T[S, B]): T[S, A => Impure[B]] =
+    final def unsafeCallback[S, A, B](action: A => T[S, B]): T[S, A => Impure[B]] =
       pure[S, A => Impure[B]] { a =>
         RealIO.run[B](action(a)).fold(e => throw e, identity)
       }
 
-    def unsafeCallback0[S, A](action: T[S, A]): T[S, () => Impure[A]] =
+    final def unsafeCallback0[S, A](action: T[S, A]): T[S, () => Impure[A]] =
       pure[S, () => Impure[A]] { () =>
         RealIO.run[A](action).fold(e => throw e, identity)
       }
 
-    def trace[S](s: String): T[S, Unit] =
+    final def trace[S](s: String): T[S, Unit] =
       unsafeCapture[S, Unit] { System.err.println(s) }
 
-    def attempt[A](forallST: Forall[T[?, A]]): Either[Throwable, A] =
+    final def attempt[A](forallST: Forall[T[?, A]]): Either[Throwable, A] =
       attemptReal[A](forallST.apply[World.Real])
 
-    def unsafeRun[A](forallST: Forall[T[?, A]]): A =
+    final def unsafeRun[A](forallST: Forall[T[?, A]]): A =
       unsafeRunReal[A](forallST.apply[World.Real])
 
-    def attemptReal[A](action: T[World.Real, A]): Either[Throwable, A] =
+    final def attemptReal[A](action: T[World.Real, A]): Either[Throwable, A] =
       RealIO.run[A](action)
 
-    def unsafeRunReal[A](action: T[World.Real, A]): A =
+    final def unsafeRunReal[A](action: T[World.Real, A]): A =
       attemptReal[A](action).fold(e => throw e, identity)
   }
 
