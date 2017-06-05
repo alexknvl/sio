@@ -5,7 +5,7 @@ import fs2.Task
 import sio.base.free.`package`.RealIO
 
 object Benchmark extends Bench.LocalTime {
-  val sizes = Gen.range("size")(30, 30, 5)
+  val sizes = Gen.range("size")(25, 25, 5)
 
   def pure(n: Int): Int = {
     if (n == 0) 0
@@ -63,7 +63,7 @@ object Benchmark extends Bench.LocalTime {
 
   performance of "Benchmark" in {
     measure method "pure" in {
-      using (sizes) in { a =>
+      using (sizes) config (exec.benchRuns -> 300, exec.minWarmupRuns -> 20000) in { a =>
         pure(a)
       }
     }
@@ -81,19 +81,19 @@ object Benchmark extends Bench.LocalTime {
     }
 
     measure method "IO" in {
-      using (sizes) in { a =>
+      using (sizes) config (exec.benchRuns -> 300, exec.minWarmupRuns -> 20000) in { a =>
         IO.unsafeRun(io(a))
       }
     }
 
     measure method "RealIO" in {
-      using (sizes) in { a =>
+      using (sizes) config (exec.benchRuns -> 300, exec.minWarmupRuns -> 20000) in { a =>
         IO.unsafeRun(io(a))
       }
     }
 
     measure method "fs2.Task" in {
-      using (sizes) in { a =>
+      using (sizes) config (exec.benchRuns -> 300, exec.minWarmupRuns -> 20000) in { a =>
         implicit val s: fs2.Strategy = fs2.Strategy.sequential
         fs2Task(a).unsafeRun()
       }
