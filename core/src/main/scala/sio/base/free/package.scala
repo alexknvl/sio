@@ -7,6 +7,8 @@ import cats.instances.either._
 
 import scala.annotation.tailrec
 import scala.annotation.unchecked.{uncheckedVariance => uV}
+import scala.collection.mutable.ArrayBuffer
+import scala.util.control.NonFatal
 
 object `package` {
   trait FreeRMImpl {
@@ -131,5 +133,92 @@ object `package` {
     final def pure[A](a: I[A]): FreeRM[I, F, A] = FreeRM.pure[I, F, A](a)
     final def map[A, B](fa: FreeRM[I, F, A])(f: A => B): FreeRM[I, F, B] = FreeRM.map(fa)(f)
     final def bind[A, B](fa: FreeRM[I, F, A])(f: I[A] => FreeRM[I, F, B]): FreeRM[I, F, B] = FreeRM.bind(fa)(f)
+  }
+
+  trait RealIOImpl {
+    type T[+A]
+
+    def unit: T[Unit]
+    def pure[A](a: A): T[A]
+    def raise(e: Throwable): T[Nothing]
+
+    def map[A, B](fa: T[A])(f: A => B): T[B]
+    def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B]
+    def handle[A](fa: T[A])(f: Throwable => T[A]): T[A]
+
+    def run[A](action: T[A]): Either[Throwable, A]
+  }
+
+  type RealIO[+A] = RealIO.T[A]
+  val RealIO: RealIOImpl = new RealIOImpl {
+    final case class Handle[A](f: Throwable => T[A])
+    sealed abstract class List[+A] {
+      @inline def ::[AA >: A](a: AA): List[AA] = new ::[AA](a, this)
+    }
+    final case object Nil extends List[Nothing]
+    final case class ::[A](head: A, tail: List[A]) extends List[A]
+    final case class Pure[A](head: A, tail: List[A]) extends List[A]
+    type T[+A] = List[AnyRef]
+
+    @inline final val unit: T[Unit] =
+      Nil
+    @inline final def pure[A](a: A): T[A] =
+      ((_: Unit) => a) :: Nil
+    @inline final def raise(e: Throwable): T[Nothing] =
+      ((_: Unit) => throw e) :: Nil
+
+    @inline final def map[A, B](fa: T[A])(f: A => B): T[B] =
+      f :: fa
+    @inline final def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B] =
+      f :: fa
+    @inline final def handle[A](fa: T[A])(f: Throwable => T[A]): T[A] =
+      Handle(f) :: fa
+
+    @inline final def run[A](action: T[A]): Either[Throwable, A] = {
+      val queue = ArrayBuffer.empty[AnyRef]
+      @tailrec def prependAll(l: List[AnyRef]): Unit = l match {
+        case Nil => ()
+        case x :: xs =>
+          queue.append(x)
+          prependAll(xs)
+      }
+      prependAll(action)
+      var result: Any = ()
+      var exc: Throwable = null
+
+      while (queue.nonEmpty) {
+        try {
+          while (queue.nonEmpty) {
+            val last = queue.last
+            queue.reduceToSize(queue.length - 1)
+            last match {
+              case handle: Handle[Any] =>
+                if (exc != null) {
+                  prependAll(handle.f(exc))
+                  result = ()
+                  exc = null
+                }
+              case f =>
+                if (exc == null) {
+                  f.asInstanceOf[Any => Any](result) match {
+                    case s: List[AnyRef] =>
+                      prependAll(s)
+                      result = ()
+                    case r =>
+                      result = r
+                  }
+                }
+            }
+          }
+        } catch {
+          case NonFatal(e) =>
+            exc = e
+            result = null
+        }
+      }
+
+      if (exc == null) Right(result.asInstanceOf[A])
+      else Left(exc)
+    }
   }
 }

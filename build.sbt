@@ -25,6 +25,9 @@ lazy val core = (project in file("core"))
   .settings(commonSettings: _*)
   .settings(
     name := "sio-core",
+    scalacOptions ++= List(
+      "-opt:l:project"
+    ),
     libraryDependencies
       ++= Libraries.cats
       ++ Libraries.simulacrum

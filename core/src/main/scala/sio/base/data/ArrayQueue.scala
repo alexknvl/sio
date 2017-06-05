@@ -60,6 +60,14 @@ final class ArrayQueue[T]
     data(rear) = item
   }
 
+  def popHeadOrThrow(): T =
+    if (count > 0) {
+      val result = data(front)
+      front = next(front)
+      count -= 1
+      result
+    } else throw new IllegalStateException("queue is empty")
+
   def popHead(): Option[T] =
     if (count > 0) {
       val result = data(front)
@@ -67,6 +75,7 @@ final class ArrayQueue[T]
       count -= 1
       Some(result)
     } else None
+
   def popLast(): Option[T] =
     if (count > 0) {
       val result = data(rear)
