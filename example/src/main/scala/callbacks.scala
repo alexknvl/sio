@@ -1,5 +1,6 @@
 import sio.core._
 import sio.teletype._
+import sio.core.syntax.io._
 
 object callbacks {
   def func(f: () => Unit): Impure[Unit] = {

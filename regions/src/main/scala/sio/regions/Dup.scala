@@ -2,6 +2,7 @@ package sio.regions
 
 import cats.data.ReaderT
 import sio.core.{IORef, IO, MonadIO}
+import sio.core.syntax.io._
 
 /**
   * Duplicate a handle in the parent region.

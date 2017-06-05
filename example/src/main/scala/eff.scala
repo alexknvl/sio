@@ -1,5 +1,6 @@
 import sio.eff.{EffIO, Effect}
 import sio.teletype
+import sio.core.syntax.io._
 
 object eff {
   final class ConsoleWrite private () extends Effect

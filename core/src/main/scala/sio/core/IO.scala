@@ -19,7 +19,7 @@ object IO {
 
   /** Creates a failed IO action without any side-effects.
     */
-  def raise[A](e: Throwable): IO[A] = ST.raise(e)
+  def raise(e: Throwable): IO[Nothing] = ST.raise(e)
 
   /** This method allows you to lift arbitrary IO actions into IO monad.
     * For this to be safe, the action should only perform local side-effects.
@@ -50,16 +50,6 @@ object IO {
 
   def mutable[A](a: A): IOMutable[A] = sio.core.Mutable.wrap(a)
 
-  private[this] val ioInterpreter: IOOp[World.Real, ?] ~> Either[Throwable, ?] =
-    new (IOOp[World.Real, ?] ~> Either[Throwable, ?]) {
-      override def apply[B](op: IOOp[World.Real, B]): Either[Throwable, B] = op match {
-        case IOOp.Lift(f) =>
-          Either.catchNonFatal(f())
-        case unlift: IOOp.Unlift[World.Real, f, t] =>
-          Either.right[Throwable, B]((x: f) => unsafeRun(unlift.run(x)))
-      }
-    }
-
   /**
     * This is the "back door" into the IO monad, allowing IO computation
     * to be performed at any time. For this to be safe, the IO computation
@@ -69,7 +59,7 @@ object IO {
     * @see unsafeRun
     */
   def unsafeAttempt[A](io: IO[A]): Impure[Either[Throwable, A]] =
-    FreeRM.foldMap[Either[Throwable, ?], IOOp[World.Real, ?], A](io.value, ioInterpreter)
+    ST.attemptReal(io)
 
   /**
     * This is the "back door" into the IO monad, allowing IO computation

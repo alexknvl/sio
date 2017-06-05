@@ -1,5 +1,6 @@
 import sio.core.{IORef, IO}
 import sio.teletype._
+import sio.core.syntax.io._
 
 object ioref {
   def loop(ref: IORef[Int]): IO[Unit] = for {

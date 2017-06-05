@@ -3,6 +3,7 @@ import cats.instances.list._
 
 import sio.core.IO
 import sio.core.instances.all._
+import sio.core.syntax.io._
 import sio.teletype.putStrLn
 
 import scala.util.Random

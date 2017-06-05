@@ -1,5 +1,6 @@
 import sio.core.{SafeApp, IO}
 import sio.teletype._
+import sio.core.syntax.io._
 
 object App extends SafeApp {
   def run(args: List[String]): IO[Unit] = List(

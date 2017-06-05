@@ -3,6 +3,7 @@ import cats.free.{Free, Inject}
 import sio.core.IO
 import sio.teletype
 import sio.core.instances.all._
+import sio.core.syntax.io._
 
 object free {
   sealed abstract class Interact[A] extends Product with Serializable

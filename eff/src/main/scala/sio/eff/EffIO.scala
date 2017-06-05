@@ -3,6 +3,7 @@ package sio.eff
 import cats.syntax.all._
 
 import sio.core._
+import sio.core.syntax.io._
 import ops.{Intersection, Union}
 
 import Effect.{ !, !! }

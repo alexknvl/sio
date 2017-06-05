@@ -4,9 +4,11 @@ import cats.{Id, Monad, ~>}
 import sio.base.RelMonad
 import sio.base.data.TASeq
 
+import scala.annotation.unchecked.{ uncheckedVariance => uV }
+
 object `package` {
   trait FreeRMImpl {
-    type T[I[_], F[_], A]
+    type T[I[_], F[_], +A]
 
     def unit[I[_], F[_]]: T[I, F, Unit]
     def pure[I[_], F[_], A](a: I[A]): T[I, F, A]
@@ -21,7 +23,7 @@ object `package` {
     (fa: T[I, F, A], run: F ~> I)(implicit I: Monad[I]): I[A]
   }
 
-  type FreeRM[I[_], F[_], A] = FreeRM.T[I, F, A]
+  type FreeRM[I[_], F[_], +A] = FreeRM.T[I, F, A]
   final val FreeRM: FreeRMImpl = new FreeRMImpl {
     sealed abstract class Op[I[_], F[_], -A, +B] extends Product with Serializable
     object Op {
@@ -31,21 +33,21 @@ object `package` {
       final case class Bind[I[_], F[_], A, B](f: I[A] => T[I, F, B]) extends Op[I, F, A, B]
     }
 
-    type T[I[_], F[_], A] = TASeq[Op[I, F, ?, ?], Unit, A]
+    type T[I[_], F[_], +A] = TASeq[Op[I, F, ?, ?], Unit, A @uV]
 
-    def unit[I[_], F[_]]: T[I, F, Unit] =
+    final def unit[I[_], F[_]]: T[I, F, Unit] =
       TASeq.empty
-    def pure[I[_], F[_], A](a: I[A]): T[I, F, A] =
+    final def pure[I[_], F[_], A](a: I[A]): T[I, F, A] =
       TASeq.single[Op[I, F, ?, ?], Unit, A](Op.Pure(a))
-    def suspend[I[_], F[_], A](a: F[A]): T[I, F, A] =
+    final def suspend[I[_], F[_], A](a: F[A]): T[I, F, A] =
       TASeq.single[Op[I, F, ?, ?], Unit, A](Op.Suspend(a))
 
-    def map[I[_], F[_], A, B](fa: T[I, F, A])(f: A => B): T[I, F, B] =
+    final def map[I[_], F[_], A, B](fa: T[I, F, A])(f: A => B): T[I, F, B] =
       TASeq.append[Op[I, F, ?, ?], Unit, A, B](fa)(Op.Map[I, F, A, B](f))
-    def bind[I[_], F[_], A, B](fa: T[I, F, A])(f: I[A] => T[I, F, B]): T[I, F, B] =
+    final def bind[I[_], F[_], A, B](fa: T[I, F, A])(f: I[A] => T[I, F, B]): T[I, F, B] =
       TASeq.append[Op[I, F, ?, ?], Unit, A, B](fa)(Op.Bind[I, F, A, B](f))
 
-    def step[I[_], F[_], A]
+    final def step[I[_], F[_], A]
     (fa: T[I, F, A], run: F ~> I)(implicit I: Monad[I]): Either[T[I, F, A], I[A]] =
       TASeq.uncons[Op[I, F, ?, ?], Unit, A](fa) match {
         case Left(proof) =>
@@ -79,7 +81,7 @@ object `package` {
         }
       }
 
-    def foldMap[I[_], F[_], A]
+    final def foldMap[I[_], F[_], A]
     (fa: T[I, F, A], run: F ~> I)(implicit I: Monad[I]): I[A] =
       I.flatten(
         I.tailRecM[T[I, F, A], I[A]]
@@ -88,8 +90,8 @@ object `package` {
   }
 
   implicit def relMonad[I[_], F[_]]: RelMonad[I, FreeRM[I, F, ?]] = new RelMonad[I, FreeRM[I, F, ?]] {
-    def pure[A](a: I[A]): FreeRM[I, F, A] = FreeRM.pure[I, F, A](a)
-    def map[A, B](fa: FreeRM[I, F, A])(f: A => B): FreeRM[I, F, B] = FreeRM.map(fa)(f)
-    def bind[A, B](fa: FreeRM[I, F, A])(f: I[A] => FreeRM[I, F, B]): FreeRM[I, F, B] = FreeRM.bind(fa)(f)
+    final def pure[A](a: I[A]): FreeRM[I, F, A] = FreeRM.pure[I, F, A](a)
+    final def map[A, B](fa: FreeRM[I, F, A])(f: A => B): FreeRM[I, F, B] = FreeRM.map(fa)(f)
+    final def bind[A, B](fa: FreeRM[I, F, A])(f: I[A] => FreeRM[I, F, B]): FreeRM[I, F, B] = FreeRM.bind(fa)(f)
   }
 }
