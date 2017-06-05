@@ -151,69 +151,106 @@ object `package` {
 
   type RealIO[+A] = RealIO.T[A]
   val RealIO: RealIOImpl = new RealIOImpl {
-    final case class Handle[A](f: Throwable => T[A])
-    sealed abstract class List[+A] {
-      @inline def ::[AA >: A](a: AA): List[AA] = new ::[AA](a, this)
+    sealed abstract class Thunk {
+      @inline final def map[A, B](f: A => B): Thunk =
+        new Run(f.asInstanceOf[Any => Any], this)
+      @inline final def handle[A](f: Throwable => A): Thunk =
+        new Handle(f.asInstanceOf[Throwable => Any], this)
     }
-    final case object Nil extends List[Nothing]
-    final case class ::[A](head: A, tail: List[A]) extends List[A]
-    final case class Pure[A](head: A, tail: List[A]) extends List[A]
-    type T[+A] = List[AnyRef]
+    final case object Unit extends Thunk
+    final case class Raise[A](e: Throwable) extends Thunk
+    final case class Run[A](f: Any => Any, tail: Thunk) extends Thunk
+    final case class Handle[A](f: Throwable => Any, tail: Thunk) extends Thunk
+    final case class Pure(head: Any) extends Thunk
+    type T[+A] = Thunk
 
-    @inline final val unit: T[Unit] =
-      Nil
-    @inline final def pure[A](a: A): T[A] =
-      ((_: Unit) => a) :: Nil
-    @inline final def raise(e: Throwable): T[Nothing] =
-      ((_: Unit) => throw e) :: Nil
+    @inline final val unit: T[Unit] = Unit
+    @inline final def pure[A](a: A): T[A] = Pure(a)
+    @inline final def raise(e: Throwable): T[Nothing] = Raise(e)
 
-    @inline final def map[A, B](fa: T[A])(f: A => B): T[B] =
-      f :: fa
-    @inline final def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B] =
-      f :: fa
-    @inline final def handle[A](fa: T[A])(f: Throwable => T[A]): T[A] =
-      Handle(f) :: fa
+    @inline final def map[A, B](fa: T[A])(f: A => B): T[B] = fa.map(f)
+    @inline final def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B] = fa.map(f)
+    @inline final def handle[A](fa: T[A])(f: Throwable => T[A]): T[A] = fa.handle(f)
+
+    @inline final val OP_UNIT   = 0
+    @inline final val OP_PURE   = 1
+    @inline final val OP_RAISE  = 2
+    @inline final val OP_RUN    = 3
+    @inline final val OP_HANDLE = 4
 
     @inline final def run[A](action: T[A]): Either[Throwable, A] = {
-      val queue = ArrayBuffer.empty[AnyRef]
-      @tailrec def prependAll(l: List[AnyRef]): Unit = l match {
-        case Nil => ()
-        case x :: xs =>
-          queue.append(x)
-          prependAll(xs)
+      var queue = Array.ofDim[Any](16)
+      var ops   = Array.ofDim[Int](16)
+      var last  = -1
+
+      @inline def append(opi: Int, op: Any): Unit = {
+        if (last + 1 >= queue.length) {
+          val newCapacity = queue.length * 3 / 2
+          val newQueue = Array.ofDim[Any](newCapacity)
+          val newOps = Array.ofDim[Int](newCapacity)
+          System.arraycopy(queue, 0, newQueue, 0, last + 1)
+          System.arraycopy(ops, 0, newOps, 0, last + 1)
+          queue = newQueue
+          ops = newOps
+        }
+
+        last += 1
+        queue(last) = op
+        ops(last) = opi
       }
-      prependAll(action)
+
+      @tailrec def enqueue(l: Thunk): Unit = l match {
+        case Unit => append(OP_UNIT, null)
+        case Pure(x) => append(OP_PURE, x)
+        case Raise(x) => append(OP_RAISE, x)
+        case Run(f, t) =>
+          append(OP_RUN, f)
+          enqueue(t)
+        case Handle(f, t) =>
+          append(OP_HANDLE, f)
+          enqueue(t)
+      }
+
+      enqueue(action)
       var result: Any = ()
       var exc: Throwable = null
 
-      while (queue.nonEmpty) {
+      while (last >= 0) {
         try {
-          while (queue.nonEmpty) {
-            val last = queue.last
-            queue.reduceToSize(queue.length - 1)
-            last match {
-              case handle: Handle[Any] =>
+          while (last >= 0) {
+            val q = queue(last)
+            val op = ops(last)
+            last -= 1
+
+//            println(s"$result $last $op $q")
+
+            op match {
+              case OP_UNIT =>
+                result = ()
+              case OP_PURE =>
+                result = q
+              case OP_RAISE =>
+                throw q.asInstanceOf[Throwable]
+              case OP_HANDLE =>
                 if (exc != null) {
-                  prependAll(handle.f(exc))
+                  enqueue(q.asInstanceOf[Throwable => Thunk](exc))
                   result = ()
                   exc = null
                 }
-              case f =>
-                if (exc == null) {
-                  f.asInstanceOf[Any => Any](result) match {
-                    case s: List[AnyRef] =>
-                      prependAll(s)
-                      result = ()
-                    case r =>
-                      result = r
-                  }
+              case OP_RUN =>
+                q.asInstanceOf[Any => Any](result) match {
+                  case s: Thunk =>
+                    enqueue(s)
+                    result = ()
+                  case r =>
+                    result = r
                 }
             }
           }
         } catch {
           case NonFatal(e) =>
+            while (last >= 0 && ops(last) != OP_HANDLE) last -= 1
             exc = e
-            result = null
         }
       }
 
