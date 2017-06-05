@@ -20,15 +20,13 @@ object `package` {
 
   object RTS {
     @inline final val OP_PURE   = 0
-    @inline final val OP_RAISE  = 1
-    @inline final val OP_MAP    = 2
-    @inline final val OP_BIND   = 3
-    @inline final val OP_HANDLE = 4
+    @inline final val OP_MAP    = 1
+    @inline final val OP_BIND   = 2
+    @inline final val OP_HANDLE = 3
 
     final val FAST_DEPTH = 128
 
     sealed abstract class Thunk
-    final case class Raise[A](e: Throwable) extends Thunk
     final case class Map[A](f: Any => Any, tail: Any) extends Thunk
     final case class Bind[A](f: Any => Thunk, tail: Any) extends Thunk
     final case class Handle[A](f: Throwable => Any, tail: Any) extends Thunk
@@ -37,9 +35,9 @@ object `package` {
   import RTS._
 
   final class RTS {
-    var queue = Array.ofDim[Any](16)
-    var ops   = Array.ofDim[Int](16)
-    var last  = -1
+    var queue: Array[Any] = Array.ofDim[Any](16)
+    var ops  : Array[Int] = Array.ofDim[Int](16)
+    var last : Int = -1
 
     @inline def append(opi: Int, op: Any): Unit = {
       if (last + 1 >= queue.length) {
@@ -57,9 +55,7 @@ object `package` {
       ops(last) = opi
     }
 
-    @tailrec def enqueue(l: Any): Unit = l match {
-      case Raise(x) =>
-        append(OP_RAISE, x)
+    @inline @tailrec def enqueue(l: Any): Unit = l match {
       case Map(f, t) =>
         append(OP_MAP, f)
         enqueue(t)
@@ -73,7 +69,7 @@ object `package` {
         append(OP_PURE, x)
     }
 
-    final def slowRun[A](action: Any): Any = {
+    def slowRun[A](action: Any): Any = {
       last = -1
       enqueue(action)
       var result: Any = ()
@@ -89,8 +85,6 @@ object `package` {
             op match {
               case OP_PURE =>
                 result = q
-              case OP_RAISE =>
-                throw q.asInstanceOf[Throwable]
               case OP_HANDLE =>
                 if (exc != null) {
                   enqueue(q.asInstanceOf[Throwable => Thunk](exc))
@@ -115,7 +109,7 @@ object `package` {
       else throw exc
     }
 
-    final def fastRun[A](action: Any, depth: Int): Any = {
+    def fastRun[A](action: Any, depth: Int): Any = {
       @tailrec def go(value: Any): Any = value match {
         case Map(f, t) =>
           if (depth < FAST_DEPTH) f(fastRun(t, depth + 1))
@@ -129,7 +123,6 @@ object `package` {
           } else {
             try slowRun(t) catch { case NonFatal(e) => f(e) }
           }
-        case Raise(x) => throw x
         case x => x
       }
 
@@ -143,7 +136,8 @@ object `package` {
 
     @inline final val unit: T[Unit] = ()
     @inline final def pure[A](a: A): T[A] = a // Pure(a)
-    @inline final def raise(e: Throwable): T[Nothing] = Raise(e)
+    @inline final def raise(e: Throwable): T[Nothing] =
+      new Map((_: Any) => throw e, null)
 
     @inline final def map[A, B](fa: T[A])(f: A => B): T[B] =
       new Map(f.asInstanceOf[Any => Any], fa)
