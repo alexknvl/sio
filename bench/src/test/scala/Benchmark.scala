@@ -7,10 +7,19 @@ import fs2.Task
 object Benchmark extends Bench.LocalTime {
   val sizes = Gen.range("size")(30, 30, 5)
 
-  def pureScala(n: Int): Int = {
+  def pure(n: Int): Int = {
     if (n == 0) 0
     else if (n == 1) 1
-    else (pureScala(n - 1) + pureScala(n - 2)) % 10
+    else (pure(n - 1) + pure(n - 2)) % 10
+  }
+
+  def opt(n: Int): Option[Int] = {
+    if (n == 0) Some(0)
+    else if (n == 1) Some(1)
+    else for {
+      a <- opt(n - 1)
+      b <- opt(n - 2)
+    } yield (a + b) % 10
   }
 
   def io(n: Int): IO[Int] = {
@@ -34,7 +43,13 @@ object Benchmark extends Bench.LocalTime {
   performance of "IO" in {
     measure method "pure" in {
       using (sizes) in { a =>
-        pureScala(a)
+        pure(a)
+      }
+    }
+
+    measure method "opt" in {
+      using (sizes) in { a =>
+        opt(a)
       }
     }
 
