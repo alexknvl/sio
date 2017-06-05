@@ -31,7 +31,7 @@ final class STSyntaxOps[S, A](val value: ST[S, A]) extends AnyVal {
     * @see [[asRunnable]]
     * @see [[asCallable]]
     */
-  def asCallback(implicit ev: S === World.Real): IO[() => Impure[A]] =
+  def asCallback(implicit ev: S === RealWorld): IO[() => Impure[A]] =
     ev.subst[ST[?, () => Impure[A]]](ST.unsafeCallback0[S, A](value))
 
   /** This method allows you to convert an `ST` computation into a [[Runnable]] that
@@ -41,7 +41,7 @@ final class STSyntaxOps[S, A](val value: ST[S, A]) extends AnyVal {
     * @see [[asCallback]]
     * @see [[asCallable]]
     */
-  def asRunnable(implicit ev: S === World.Real): IO[Runnable] =
+  def asRunnable(implicit ev: S === RealWorld): IO[Runnable] =
     ST.map(asCallback(ev), (f: () => A) => new Runnable { override def run(): Unit = f() })
 
   /** This method allows you to convert an `ST` computation into a [[Callable]] that
@@ -51,7 +51,7 @@ final class STSyntaxOps[S, A](val value: ST[S, A]) extends AnyVal {
     * @see [[asCallback]]
     * @see [[asRunnable]]
     */
-  def asCallable(implicit ev: S === World.Real): IO[Callable[A]] =
+  def asCallable(implicit ev: S === RealWorld): IO[Callable[A]] =
     ST.map(asCallback(ev), (f: () => A) => new Callable[A] { override def call(): A = f() })
 
   /** Handle any error, by mapping it to an `A` value.

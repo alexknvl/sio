@@ -68,7 +68,7 @@ trait STImpl {
     */
   def unsafeRun[A](forallST: Forall[T[?, A]]): A
 
-  def attemptReal[A](action: T[World.Real, A]): Either[Throwable, A]
+  def attemptReal[A](action: T[RealWorld, A]): Either[Throwable, A]
 
-  def unsafeRunReal[A](action: T[World.Real, A]): A
+  def unsafeRunReal[A](action: T[RealWorld, A]): A
 }

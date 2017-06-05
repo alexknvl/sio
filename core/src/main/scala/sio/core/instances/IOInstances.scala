@@ -6,7 +6,7 @@ import sio.core._
 
 trait IOInstances extends STInstances { self: STInstances =>
   implicit val ioMonadIO: MonadIO[IO] with MonadControlIO[IO] = new MonadIO[IO] with MonadControlIO[IO] {
-    private val M: MonadError[ST[World.Real, ?], Throwable] = self.stMonadError
+    private val M: MonadError[ST[RealWorld, ?], Throwable] = self.stMonadError
 
     override def pure[A](x: A): IO[A] =
       M.pure(x)

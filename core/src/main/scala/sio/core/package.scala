@@ -47,15 +47,15 @@ object `package` {
       unsafeCapture[S, Unit] { System.err.println(s) }
 
     final def attempt[A](forallST: Forall[T[?, A]]): Either[Throwable, A] =
-      attemptReal[A](forallST.apply[World.Real])
+      attemptReal[A](forallST.apply[RealWorld])
 
     final def unsafeRun[A](forallST: Forall[T[?, A]]): A =
-      unsafeRunReal[A](forallST.apply[World.Real])
+      unsafeRunReal[A](forallST.apply[RealWorld])
 
-    final def attemptReal[A](action: T[World.Real, A]): Either[Throwable, A] =
+    final def attemptReal[A](action: T[RealWorld, A]): Either[Throwable, A] =
       RealIO.run[A](action)
 
-    final def unsafeRunReal[A](action: T[World.Real, A]): A =
+    final def unsafeRunReal[A](action: T[RealWorld, A]): A =
       attemptReal[A](action).fold(e => throw e, identity)
   }
 
@@ -67,14 +67,14 @@ object `package` {
     def subst[F[_], S, A](fa: F[A]): F[T[S, A]] = fa
   }
 
-  type IO[A] = ST[World.Real, A]
+  type IO[A] = ST[RealWorld, A]
 
   type STRef[S, A] = Ref[S, A]
   type STMutable[S, A] = Mutable[S, A]
   type STArray[S, E] = Mutable[S, Array[E]]
 
-  type IORef[A] = Ref[World.Real, A]
-  type IOMutable[A] = Mutable[World.Real, A]
+  type IORef[A] = Ref[RealWorld, A]
+  type IOMutable[A] = Mutable[RealWorld, A]
   type IOArray[E] = IOMutable[Array[E]]
 
   type ForallST[A] = Forall[ST[?, A]]
