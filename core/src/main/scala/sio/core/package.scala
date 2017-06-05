@@ -12,8 +12,6 @@ object `package` {
 
   type ST[S, +A] = ST.T[S, A]
   final val ST = new STImpl {
-    type I[A] = Either[Throwable, A]
-    type F[A] = () => A
     type T[S, +A] = RealIO[A]
 
     final def unit[S]: T[S, Unit] =
