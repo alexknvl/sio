@@ -24,6 +24,8 @@ package sio.base.data
 
 import Steque._
 
+import scala.reflect.ClassTag
+
 /**
   * Trivial catenable sequence. Supports O(1) append, and (amortized)
   * O(1) `uncons`, such that walking the sequence via N successive `uncons`
@@ -136,6 +138,15 @@ sealed abstract class Steque[+A] {
     */
   final def toList: List[A] = {
     val builder = List.newBuilder[A]
+    foreach { a => builder += a; () }
+    builder.result
+  }
+
+  /**
+    * Converts to a list.
+    */
+  final def toArray[AA >: A](implicit AA: ClassTag[AA]): Array[AA] = {
+    val builder = Array.newBuilder[AA]
     foreach { a => builder += a; () }
     builder.result
   }

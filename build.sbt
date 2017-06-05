@@ -2,7 +2,7 @@ lazy val commonSettings = List(
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
   addCompilerPlugin(Libraries.paradise),
   organization := "com.alexknvl",
-  version := "0.3.1",
+  version := "0.3.2",
   scalaVersion := "2.12.1",
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   scalacOptions ++= List(
@@ -85,13 +85,16 @@ lazy val teletype = (project in file("teletype"))
   .settings(name := "sio-teletype")
   .dependsOn(core)
 
-lazy val macros = (project in file("macros"))
+lazy val bench = (project in file("bench"))
   .settings(commonSettings: _*)
-  .settings(
-    name := "sio-macros",
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _),
-    libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-reflect" % _),
-    libraryDependencies += "org.typelevel" %% "macro-compat" % "1.1.1")
+  .settings(name := "sio-bench",
+    parallelExecution in Test := false,
+    testFrameworks += new TestFramework(
+      "org.scalameter.ScalaMeterFramework"),
+    libraryDependencies
+      ++= Libraries.testing
+      ++  Libraries.scalameter
+      ++  Libraries.fs2)
   .dependsOn(core)
 
 lazy val example = (project in file("example"))

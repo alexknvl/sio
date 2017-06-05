@@ -8,6 +8,8 @@ object Libraries {
   val scalatest  : List[ModuleID] = List("org.scalatest"        %% "scalatest"  % "3.0.3"  % "test")
   val testing    : List[ModuleID] = scalacheck ++ scalatest ++ discipline
 
+  val scalameter : List[ModuleID] = List("com.storm-enroute"    %% "scalameter" % "0.8.2"  % "test")
+
   val commonsLang: List[ModuleID] = List("org.apache.commons"   %  "commons-lang3" % "3.5")
 
   val cats       : List[ModuleID] = List("org.typelevel"        %% "cats"       % "0.9.0")

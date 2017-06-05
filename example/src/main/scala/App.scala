@@ -1,6 +1,6 @@
 import sio.core.{SafeApp, IO}
 import sio.teletype._
-import sio.core.syntax.io._
+import sio.core.syntax.io.toSTSyntaxOps
 
 object App extends SafeApp {
   def run(args: List[String]): IO[Unit] = List(
@@ -14,5 +14,5 @@ object App extends SafeApp {
     "callbacks" -> callbacks.run
   ).foldLeft(IO.unit) { case (io, (name, main)) =>
       io >> putStrLn(s"Running $name") >> main >> putStrLn("")
-  }
+  } >> putStrLn(IO.unit.getClass.toString)
 }

@@ -6,6 +6,8 @@ object `package` {
   trait TASeqImpl {
     type T[F[_, _], A, B]
 
+    def unsafeUnwrap[F[_, _], A, B](value: T[F, A, B]): Steque[F[Any, Any]]
+
     def empty[F[_, _], A]: T[F, A, A]
     def single[F[_, _], A, B](ab: F[A, B]): T[F, A, B]
 
@@ -19,6 +21,8 @@ object `package` {
   type TASeq[F[_, _], A, B] = TASeq.T[F, A, B]
   val TASeq: TASeqImpl = new TASeqImpl {
     type T[F[_, _], A, B] = Steque[F[Any, Any]]
+
+    def unsafeUnwrap[F[_, _], A, B](value: T[F, A, B]): Steque[F[Any, Any]] = value
 
     def empty[F[_, _], A]: T[F, A, A] =
       Steque.empty

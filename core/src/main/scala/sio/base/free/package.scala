@@ -1,10 +1,12 @@
 package sio.base.free
 
-import cats.{Id, Monad, ~>}
+import cats.{Id, Monad, MonadError, ~>}
 import sio.base.RelMonad
-import sio.base.data.TASeq
+import sio.base.data.{ArrayQueue, Steque, TASeq}
+import cats.instances.either._
 
-import scala.annotation.unchecked.{ uncheckedVariance => uV }
+import scala.annotation.tailrec
+import scala.annotation.unchecked.{uncheckedVariance => uV}
 
 object `package` {
   trait FreeRMImpl {
@@ -21,6 +23,9 @@ object `package` {
     (fa: T[I, F, A], run: F ~> I)(implicit I: Monad[I]): Either[T[I, F, A], I[A]]
     def foldMap[I[_], F[_], A]
     (fa: T[I, F, A], run: F ~> I)(implicit I: Monad[I]): I[A]
+
+    def foldEither[E, F[_], A]
+    (fa: T[Either[E, ?], F, A], run: F ~> Either[E, ?]): Either[E, A]
   }
 
   type FreeRM[I[_], F[_], +A] = FreeRM.T[I, F, A]
@@ -87,6 +92,39 @@ object `package` {
         I.tailRecM[T[I, F, A], I[A]]
           (fa: T[I, F, A])
           (x => I.pure(step[I, F, A](x, run)(I))))
+
+    @inline final def foldEither[E, F[_], A]
+    (fa: T[Either[E, ?], F, A], run: F ~> Either[E, ?]): Either[E, A] = {
+      val M: MonadError[Either[E, ?], E] = MonadError[Either[E, ?], E]
+      val anyUnit = ().asInstanceOf[Any]
+      val rightUnit = Right[E, Any](anyUnit)
+
+      def unwrap[X](t: T[Either[E, ?], F, X]): Steque[Op[Either[E, ?], F, Any, Any]] =
+        TASeq.unsafeUnwrap[Op[Either[E, ?], F, ?, ?], Unit, X](t)
+
+      val queue = ArrayQueue.from(unwrap[A](fa).toArray)
+
+      @tailrec def loop(value: Either[E, Any]): Either[E, Any] = {
+        val next = queue.popHead()
+        next match {
+          case None => value
+          case Some(Op.Pure(x)) =>
+
+            loop(value.flatMap(_ => x))
+          case Some(Op.Suspend(x)) =>
+            loop(value.flatMap(_ => run.apply(x)))
+          case Some(Op.Map(f)) =>
+            loop(value.map(f))
+          case Some(Op.Bind(f)) =>
+            loop({
+              queue.prependAll(unwrap[Any](f(value)).toArray)
+              rightUnit
+            })
+        }
+      }
+
+      loop(rightUnit).map(_.asInstanceOf[A])
+    }
   }
 
   implicit def relMonad[I[_], F[_]]: RelMonad[I, FreeRM[I, F, ?]] = new RelMonad[I, FreeRM[I, F, ?]] {

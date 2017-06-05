@@ -47,7 +47,7 @@ object `package` {
 
     def unsafeCallback0[S, A](action: T[S, A]): T[S, () => Impure[A]] =
       pure[S, () => Impure[A]] { () =>
-        FreeRM.foldMap[Either[Throwable, ?], F, A](action, stInterpreter)
+        FreeRM.foldEither[Throwable, F, A](action, stInterpreter)
           .fold(e => throw e, identity)
       }
 
@@ -67,7 +67,7 @@ object `package` {
       unsafeRunReal[A](forallST.apply[World.Real])
 
     def attemptReal[A](action: T[World.Real, A]): Either[Throwable, A] =
-      FreeRM.foldMap[Either[Throwable, ?], F, A](action, stInterpreter)
+      FreeRM.foldEither[Throwable, F, A](action, stInterpreter)
 
     def unsafeRunReal[A](action: T[World.Real, A]): A =
       attemptReal[A](action).fold(e => throw e, identity)
