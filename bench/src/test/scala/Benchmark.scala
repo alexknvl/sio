@@ -1,8 +1,8 @@
 import org.scalameter.api._
 import sio.core.IO
 import sio.core.syntax.io._
-
 import fs2.Task
+import sio.base.free.`package`.RealIO
 
 object Benchmark extends Bench.LocalTime {
   val sizes = Gen.range("size")(30, 30, 5)
@@ -31,6 +31,16 @@ object Benchmark extends Bench.LocalTime {
     } yield (a + b) % 10
   }
 
+  def realIO(n: Int): RealIO[Int] = {
+    if (n == 0) IO.pure(0)
+    else if (n == 1) IO.pure(1)
+    else RealIO.flatMap(realIO(n - 1)) { a =>
+      RealIO.map(realIO(n - 2)) { b =>
+        (a + b) % 10
+      }
+    }
+  }
+
   def fs2Task(n: Int): Task[Int] = {
     if (n == 0) Task.delay(0)
     else if (n == 1) Task.delay(1)
@@ -40,20 +50,26 @@ object Benchmark extends Bench.LocalTime {
     } yield (a + b) % 10
   }
 
-  performance of "IO" in {
+  performance of "Benchmark" in {
     measure method "pure" in {
       using (sizes) in { a =>
         pure(a)
       }
     }
 
-    measure method "opt" in {
+    measure method "Option" in {
       using (sizes) in { a =>
         opt(a)
       }
     }
 
-    measure method "sio.core.IO" in {
+    measure method "IO" in {
+      using (sizes) in { a =>
+        IO.unsafeRun(io(a))
+      }
+    }
+
+    measure method "RealIO" in {
       using (sizes) in { a =>
         IO.unsafeRun(io(a))
       }

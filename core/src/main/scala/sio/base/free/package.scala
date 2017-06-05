@@ -151,30 +151,25 @@ object `package` {
 
   type RealIO[+A] = RealIO.T[A]
   val RealIO: RealIOImpl = new RealIOImpl {
-    sealed abstract class Thunk {
-      @inline final def map[A, B](f: A => B): Thunk =
-        new Map(f.asInstanceOf[Any => Any], this)
-      @inline final def bind[A, B](f: A => T[B]): Thunk =
-        new Bind(f.asInstanceOf[Any => Thunk], this)
-      @inline final def handle[A](f: Throwable => A): Thunk =
-        new Handle(f.asInstanceOf[Throwable => Any], this)
-    }
+    sealed abstract class Thunk
     final case object Unit extends Thunk
     final case class Raise[A](e: Throwable) extends Thunk
-    final case class Map[A](f: Any => Any, tail: Thunk) extends Thunk
-    final case class Bind[A](f: Any => Thunk, tail: Thunk) extends Thunk
-    final case class Handle[A](f: Throwable => Any, tail: Thunk) extends Thunk
-    final case class Pure(head: Any) extends Thunk
+    final case class Map[A](f: Any => Any, tail: Any) extends Thunk
+    final case class Bind[A](f: Any => Thunk, tail: Any) extends Thunk
+    final case class Handle[A](f: Throwable => Any, tail: Any) extends Thunk
 
-    type T[+A] = Thunk
+    type T[+A] = Any
 
     @inline final val unit: T[Unit] = Unit
-    @inline final def pure[A](a: A): T[A] = Pure(a)
+    @inline final def pure[A](a: A): T[A] = a // Pure(a)
     @inline final def raise(e: Throwable): T[Nothing] = Raise(e)
 
-    @inline final def map[A, B](fa: T[A])(f: A => B): T[B] = fa.map(f)
-    @inline final def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B] = fa.bind(f)
-    @inline final def handle[A](fa: T[A])(f: Throwable => T[A]): T[A] = fa.handle(f)
+    @inline final def map[A, B](fa: T[A])(f: A => B): T[B] =
+      new Map(f.asInstanceOf[Any => Any], fa)
+    @inline final def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B] =
+      new Bind(f.asInstanceOf[Any => Thunk], fa)
+    @inline final def handle[A](fa: T[A])(f: Throwable => T[A]): T[A] =
+      new Handle(f.asInstanceOf[Throwable => Any], fa)
 
     @inline final val OP_UNIT   = 0
     @inline final val OP_PURE   = 1
@@ -204,9 +199,8 @@ object `package` {
         ops(last) = opi
       }
 
-      @tailrec def enqueue(l: Thunk): Unit = l match {
+      @tailrec def enqueue(l: Any): Unit = l match {
         case Unit => append(OP_UNIT, null)
-        case Pure(x) => append(OP_PURE, x)
         case Raise(x) => append(OP_RAISE, x)
         case Map(f, t) =>
           append(OP_MAP, f)
@@ -217,6 +211,8 @@ object `package` {
         case Handle(f, t) =>
           append(OP_HANDLE, f)
           enqueue(t)
+        case x =>
+          append(OP_PURE, x)
       }
 
       enqueue(action)
