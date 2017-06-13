@@ -2,7 +2,7 @@ lazy val commonSettings = List(
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
   addCompilerPlugin(Libraries.paradise),
   organization := "com.alexknvl",
-  version := "0.3.2",
+  version := "0.3.5",
   scalaVersion := "2.12.1",
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   scalacOptions ++= List(
@@ -26,8 +26,7 @@ lazy val core = (project in file("core"))
   .settings(
     name := "sio-core",
     scalacOptions ++= List(
-      "-opt:l:project"
-    ),
+      "-opt:l:project"),
     libraryDependencies
       ++= Libraries.cats
       ++ Libraries.simulacrum

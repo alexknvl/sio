@@ -8,7 +8,7 @@ import leibniz.Forall
 import sio.base.RunInBase
 import sio.core._
 import sio.core.instances.all._
-import sio.core.syntax.io._
+import sio.core.syntax.st._
 
 import scala.annotation.unchecked.{ uncheckedVariance => uV }
 

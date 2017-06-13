@@ -27,9 +27,10 @@ object `package` {
     final val FAST_DEPTH = 128
 
     sealed abstract class Thunk
-    final case class Map[A](f: Any => Any, tail: Any) extends Thunk
-    final case class Bind[A](f: Any => Thunk, tail: Any) extends Thunk
-    final case class Handle[A](f: Throwable => Any, tail: Any) extends Thunk
+    final case class Pure(value: Any) extends Thunk
+    final case class Map(f: Any => Any, tail: Thunk) extends Thunk
+    final case class Bind(f: Any => Thunk, tail: Thunk) extends Thunk
+    final case class Handle(f: Throwable => Thunk, tail: Thunk) extends Thunk
   }
 
   import RTS._
@@ -39,7 +40,7 @@ object `package` {
     var ops  : Array[Int] = Array.ofDim[Int](16)
     var last : Int = -1
 
-    @inline def append(opi: Int, op: Any): Unit = {
+    def append(opi: Int, op: Any): Unit = {
       if (last + 1 >= queue.length) {
         val newCapacity = queue.length * 3 / 2
         val newQueue = Array.ofDim[Any](newCapacity)
@@ -56,6 +57,8 @@ object `package` {
     }
 
     @inline @tailrec def enqueue(l: Any): Unit = l match {
+      case Pure(x) =>
+        append(OP_PURE, x)
       case Map(f, t) =>
         append(OP_MAP, f)
         enqueue(t)
@@ -65,8 +68,6 @@ object `package` {
       case Handle(f, t) =>
         append(OP_HANDLE, f)
         enqueue(t)
-      case x =>
-        append(OP_PURE, x)
     }
 
     def slowRun[A](action: Any): Any = {
@@ -105,12 +106,12 @@ object `package` {
         }
       }
 
-      if (exc == null) result
-      else throw exc
+      if (exc == null) result else throw exc
     }
 
     def fastRun[A](action: Any, depth: Int): Any = {
       @tailrec def go(value: Any): Any = value match {
+        case Pure(x) => x
         case Map(f, t) =>
           if (depth < FAST_DEPTH) f(fastRun(t, depth + 1))
           else f(slowRun[Any](t))
@@ -123,7 +124,6 @@ object `package` {
           } else {
             try slowRun(t) catch { case NonFatal(e) => f(e) }
           }
-        case x => x
       }
 
       go(action)
@@ -132,19 +132,18 @@ object `package` {
 
   type RealIO[+A] = RealIO.T[A]
   val RealIO: RealIOImpl = new RealIOImpl {
-    type T[+A] = Any
+    type T[+A] = Thunk
 
-    @inline final val unit: T[Unit] = ()
-    @inline final def pure[A](a: A): T[A] = a // Pure(a)
+    @inline final val unit: T[Unit] = Pure(())
+    @inline final def pure[A](a: A): T[A] = Pure(a)
     @inline final def raise(e: Throwable): T[Nothing] =
-      new Map((_: Any) => throw e, null)
-
+      Map((_: Any) => throw e, null)
     @inline final def map[A, B](fa: T[A])(f: A => B): T[B] =
-      new Map(f.asInstanceOf[Any => Any], fa)
+      Map(f.asInstanceOf[Any => Any], fa)
     @inline final def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B] =
-      new Bind(f.asInstanceOf[Any => Thunk], fa)
+      Bind(f.asInstanceOf[Any => Thunk], fa)
     @inline final def handle[A](fa: T[A])(f: Throwable => T[A]): T[A] =
-      new Handle(f.asInstanceOf[Throwable => Any], fa)
+      Handle(f.asInstanceOf[Throwable => Thunk], fa)
 
     final def run[A](action: T[A]): Either[Throwable, A] = {
       val rts = new RTS()

@@ -1,9 +1,9 @@
 import cats._
 import cats.free.{Free, Inject}
-import sio.core.IO
+import sio.core._
 import sio.teletype
 import sio.core.instances.all._
-import sio.core.syntax.io._
+import sio.core.syntax.st._
 
 object free {
   sealed abstract class Interact[A] extends Product with Serializable
@@ -31,7 +31,7 @@ object free {
     } yield ()
   }
 
-  object InteractIOInterpreter extends (Interact ~> IO) {
+  object InteractIOInterpreter extends (Interact ~> ST[RW, ?]) {
     def apply[A](i: Interact[A]) = i match {
       case Interact.Ask(x) => teletype.putStrLn(x) >> teletype.getLine
       case Interact.Tell(x) => teletype.putStrLn(x)

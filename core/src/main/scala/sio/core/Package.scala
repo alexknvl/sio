@@ -1,17 +1,17 @@
 package sio.core
 
-import cats.~>
+import java.util.concurrent.Callable
+
+import leibniz.{===, Forall}
+import sio.base.free.`package`.RealIO
+
+import cats.data.EitherT
 import cats.syntax.either._
 import cats.instances.either._
 
-import leibniz.Forall
-import sio.base.free._
-
 object `package` {
-  type Impure[+A] = A
-
   type ST[S, +A] = ST.T[S, A]
-  final val ST = new STImpl {
+  final val ST: STImpl = new STImpl {
     type T[S, +A] = RealIO[A]
 
     final def unit[S]: T[S, Unit] =
@@ -21,11 +21,11 @@ object `package` {
     final def raise[S](x: Throwable): T[S, Nothing] =
       RealIO.raise(x)
 
-    final def map[S, A, B](fa: T[S, A], f: A => B): T[S, B] =
+    final def map[S, A, B](fa: T[S, A])(f: A => B): T[S, B] =
       RealIO.map[A, B](fa)(f)
-    final def flatMap[S, A, B](fa: T[S, A], f: A => T[S, B]): T[S, B] =
+    final def flatMap[S, A, B](fa: T[S, A])(f: A => T[S, B]): T[S, B] =
       RealIO.flatMap[A, B](fa)(f)
-    final def handleErrorWith[S, A](fa: T[S, A], f: Throwable => T[S, A]): T[S, A] =
+    final def handleErrorWith[S, A](fa: T[S, A])(f: Throwable => T[S, A]): T[S, A] =
       RealIO.handle[A](fa)(f)
 
     final def unsafeCapture[S, A](a: => Impure[A]): T[S, A] =
@@ -45,15 +45,15 @@ object `package` {
       unsafeCapture[S, Unit] { System.err.println(s) }
 
     final def attempt[A](forallST: Forall[T[?, A]]): Either[Throwable, A] =
-      attemptReal[A](forallST.apply[RealWorld])
+      attemptReal[A](forallST.apply[RW])
 
     final def unsafeRun[A](forallST: Forall[T[?, A]]): A =
-      unsafeRunReal[A](forallST.apply[RealWorld])
+      unsafeRunReal[A](forallST.apply[RW])
 
-    final def attemptReal[A](action: T[RealWorld, A]): Either[Throwable, A] =
+    final def attemptReal[A](action: T[RW, A]): Either[Throwable, A] =
       RealIO.run[A](action)
 
-    final def unsafeRunReal[A](action: T[RealWorld, A]): A =
+    final def unsafeRunReal[A](action: T[RW, A]): A =
       attemptReal[A](action).fold(e => throw e, identity)
   }
 
@@ -65,15 +65,17 @@ object `package` {
     def subst[F[_], S, A](fa: F[A]): F[T[S, A]] = fa
   }
 
-  type IO[A] = ST[RealWorld, A]
+  type Impure[A]      = A
 
-  type STRef[S, A] = Ref[S, A]
+  type IO[A]           = ST[RW, A]
+
+  type STRef[S, A]     = Ref[S, A]
   type STMutable[S, A] = Mutable[S, A]
-  type STArray[S, E] = Mutable[S, Array[E]]
+  type STArray[S, E]   = Mutable[S, Array[E]]
 
-  type IORef[A] = Ref[RealWorld, A]
-  type IOMutable[A] = Mutable[RealWorld, A]
-  type IOArray[E] = IOMutable[Array[E]]
+  type IORef[A]        = Ref[RW, A]
+  type IOMutable[A]    = Mutable[RW, A]
+  type IOArray[E]      = Mutable[RW, Array[E]]
 
-  type ForallST[A] = Forall[ST[?, A]]
+  type ForallST[A]     = Forall[ST[?, A]]
 }

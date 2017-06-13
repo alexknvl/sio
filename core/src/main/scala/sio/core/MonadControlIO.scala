@@ -1,7 +1,7 @@
 package sio.core
 
 import simulacrum.typeclass
-import sio.base.{MonadControl, RunInBase}
+import sio.base.MonadControl
 
 /**
   * MonadControlIO is the class of IO-based monads supporting an extra operation liftControlIO,

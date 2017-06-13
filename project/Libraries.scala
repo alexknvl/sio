@@ -24,23 +24,23 @@ object Libraries {
   val leibniz    : List[ModuleID] = List("com.alexknvl"         %% "leibniz"    % "0.3.2")
   val newts      : List[ModuleID] = List("com.alexknvl"         %% "newtypes"   % "0.0.2")
 
-  val iteratee = List(
+  val iteratee : List[ModuleID] = List(
     "io.iteratee"  %%  "iteratee-core",
     "io.iteratee"  %%  "iteratee-files")
     .map(_ % "0.11.0")
 
-  val atto = List(
+  val atto : List[ModuleID] = List(
     "org.tpolecat" %% "atto-core",
     "org.tpolecat" %% "atto-compat-cats")
     .map(_ % "0.5.2")
 
-  val circe = List(
+  val circe : List[ModuleID] = List(
     "io.circe" %% "circe-core",
     "io.circe" %% "circe-generic",
     "io.circe" %% "circe-parser")
     .map(_ % "0.7.1")
 
-  val fs2 = List(
+  val fs2 : List[ModuleID] = List(
     "co.fs2" %% "fs2-core" % "0.9.5",
     "co.fs2" %% "fs2-io" % "0.9.5",
     "com.spinoco" %% "fs2-http" % "0.1.7")

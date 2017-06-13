@@ -1,6 +1,6 @@
 import org.scalameter.api._
-import sio.core.IO
-import sio.core.syntax.io._
+import sio.core._
+import sio.core.syntax.st._
 import fs2.Task
 import sio.base.free.`package`.RealIO
 
@@ -24,6 +24,12 @@ object Benchmark extends Bench.LocalTime {
     else (wrapped(n - 1) + wrapped(n - 2)) % 10
   }
 
+  def pureBig(n: Int): BigInt = {
+    if (n == 0) BigInt(0)
+    else if (n == 1) BigInt(1)
+    else (pureBig(n - 1) + pureBig(n - 2)) % 10
+  }
+
   def opt(n: Int): Option[Int] = {
     if (n == 0) Some(0)
     else if (n == 1) Some(1)
@@ -33,7 +39,7 @@ object Benchmark extends Bench.LocalTime {
     } yield (a + b) % 10
   }
 
-  def io(n: Int): IO[Int] = {
+  def io(n: Int): ST[RW, Int] = {
     if (n == 0) IO.pure(0)
     else if (n == 1) IO.pure(1)
     else for {
@@ -42,9 +48,18 @@ object Benchmark extends Bench.LocalTime {
     } yield (a + b) % 10
   }
 
+  def ioBig(n: Int): ST[RW, BigInt] = {
+    if (n == 0) IO.pure(BigInt(0))
+    else if (n == 1) IO.pure(BigInt(1))
+    else for {
+      a <- ioBig(n - 1)
+      b <- ioBig(n - 2)
+    } yield (a + b) % 10
+  }
+
   def realIO(n: Int): RealIO[Int] = {
-    if (n == 0) IO.pure(0)
-    else if (n == 1) IO.pure(1)
+    if (n == 0) RealIO.pure(0)
+    else if (n == 1) RealIO.pure(1)
     else RealIO.flatMap(realIO(n - 1)) { a =>
       RealIO.map(realIO(n - 2)) { b =>
         (a + b) % 10
@@ -96,6 +111,18 @@ object Benchmark extends Bench.LocalTime {
       using (sizes) config (exec.benchRuns -> 300, exec.minWarmupRuns -> 20000) in { a =>
         implicit val s: fs2.Strategy = fs2.Strategy.sequential
         fs2Task(a).unsafeRun()
+      }
+    }
+
+    measure method "pure + Big" in {
+      using (sizes) config (exec.benchRuns -> 300, exec.minWarmupRuns -> 20000) in { a =>
+        pureBig(a)
+      }
+    }
+
+    measure method "IO + Big" in {
+      using (sizes) config (exec.benchRuns -> 300, exec.minWarmupRuns -> 20000) in { a =>
+        IO.unsafeRun(ioBig(a))
       }
     }
 

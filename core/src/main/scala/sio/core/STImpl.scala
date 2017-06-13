@@ -8,9 +8,9 @@ import leibniz.Forall
 trait STImpl {
   type T[S, +A]
 
-  def map[S, A, B](fa: T[S, A], f: A => B): T[S, B]
-  def flatMap[S, A, B](fa: T[S, A], f: A => T[S, B]): T[S, B]
-  def handleErrorWith[S, A](fa: T[S, A], f: Throwable => T[S, A]): T[S, A]
+  def map[S, A, B](fa: T[S, A])(f: A => B): T[S, B]
+  def flatMap[S, A, B](fa: T[S, A])(f: A => T[S, B]): T[S, B]
+  def handleErrorWith[S, A](fa: T[S, A])(f: Throwable => T[S, A]): T[S, A]
 
   /** Creates an ST action that produces a unit value without performing
     * any side-effects.
@@ -68,7 +68,7 @@ trait STImpl {
     */
   def unsafeRun[A](forallST: Forall[T[?, A]]): A
 
-  def attemptReal[A](action: T[RealWorld, A]): Either[Throwable, A]
+  def attemptReal[A](action: T[RW, A]): Either[Throwable, A]
 
-  def unsafeRunReal[A](action: T[RealWorld, A]): A
+  def unsafeRunReal[A](action: T[RW, A]): A
 }

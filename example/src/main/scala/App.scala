@@ -1,9 +1,9 @@
-import sio.core.{SafeApp, IO}
+import sio.core._
 import sio.teletype._
-import sio.core.syntax.io.toSTSyntaxOps
+import sio.core.syntax.st._
 
 object App extends SafeApp {
-  def run(args: List[String]): IO[Unit] = List(
+  def run(args: List[String]): ST[RW, Unit] = List(
     "core"      -> core.run,
     "eff"       -> eff.run.runEff,
     "free"      -> free.main,

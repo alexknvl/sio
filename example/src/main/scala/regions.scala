@@ -1,10 +1,10 @@
-import sio.core.{LiftIO, MonadControlIO, MonadIO, IO}
+import sio.core._
 import sio.teletype._
 import sio.regions._
 import sio.regions.Dup._
 
 import cats.syntax.all._
-import sio.core.syntax.io._
+import sio.core.syntax.st._
 import sio.core.instances.all._
 
 object regions {

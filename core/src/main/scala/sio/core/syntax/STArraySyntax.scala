@@ -1,14 +1,16 @@
 package sio.core.syntax
 
 import cats.kernel.Order
-import sio.core.{MutableSyntax, ST, STArray}
+import sio.core.MutableSyntax
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.util.Sorting
 
+import sio.core._
+
 trait STArraySyntax {
-  implicit class STArraySyntax[S, E](handle: STArray[S, E]) extends MutableSyntax(handle) {
+  implicit class STArraySyntax[S, E](handle: STArray[S, E]) extends MutableSyntax[S, Array[E]](handle) {
     def length: Int = unsafePure { _.length }
 
     def get(i: Int): ST[S, E] = lift { _.apply(i) }

@@ -1,9 +1,9 @@
-import sio.core.{IORef, IO}
+import sio.core._
 import sio.teletype._
-import sio.core.syntax.io._
+import sio.core.syntax.st._
 
 object ioref {
-  def loop(ref: IORef[Int]): IO[Unit] = for {
+  def loop(ref: IORef[Int]): ST[RW, Unit] = for {
     i   <- ref.read
     _   <- if (i < 3)
       putStrLn(s"$i") >> ref.write(i + 1) >> loop(ref)

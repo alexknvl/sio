@@ -1,31 +1,31 @@
 package sio
 
-import sio.core.IO
+import sio.core._
 import scala.io.StdIn
 
 package object teletype {
   /**
     * Read a character from the standard input device.
     */
-  val getChar: IO[Char] = IO { StdIn.readChar() }
+  val getChar: ST[RW, Char] = IO { StdIn.readChar() }
 
   /**
     * Read a line from the standard input device
     */
-  def getLine: IO[String] = IO { StdIn.readLine() }
+  def getLine: ST[RW, String] = IO { StdIn.readLine() }
 
   /**
     * Write a character to the standard output device.
     */
-  def putChar(c: Char): IO[Unit] = IO { print(c) }
+  def putChar(c: Char): ST[RW, Unit] = IO { print(c) }
 
   /**
     * Write a string to the standard output device.
     */
-  def putStr(s: String): IO[Unit] = IO { print(s) }
+  def putStr(s: String): ST[RW, Unit] = IO { print(s) }
 
   /**
     * The same as [[putStr]], but adds a newline character.
     */
-  def putStrLn(s: String): IO[Unit] = IO { println(s) }
+  def putStrLn(s: String): ST[RW, Unit] = IO { println(s) }
 }
