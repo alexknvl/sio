@@ -29,7 +29,7 @@ object `package` {
       RealIO.handle[A](fa)(f)
 
     final def unsafeCapture[S, A](a: => Impure[A]): T[S, A] =
-      RealIO.map(RealIO.unit)(_ => a)
+      RealIO.delay((_: Any) => a)
 
     final def unsafeCallback[S, A, B](action: A => T[S, B]): T[S, A => Impure[B]] =
       pure[S, A => Impure[B]] { a =>
@@ -57,8 +57,8 @@ object `package` {
       attemptReal[A](action).fold(e => throw e, identity)
   }
 
-  type Mutable[S, A] = Mutable.T[S, A]
-  final val Mutable: MutableImpl = new MutableImpl {
+  type Mut[S, A] = Mut.T[S, A]
+  final val Mut: MutImpl = new MutImpl {
     type T[S, A] = A
     def wrap[S, A](a: A): T[S, A] = a
     def unwrap[S, A](tsa: T[S, A]): A = tsa
@@ -70,12 +70,12 @@ object `package` {
   type IO[A]           = ST[RW, A]
 
   type STRef[S, A]     = Ref[S, A]
-  type STMutable[S, A] = Mutable[S, A]
-  type STArray[S, E]   = Mutable[S, Array[E]]
+  type STMutable[S, A] = Mut[S, A]
+  type STArray[S, E]   = Mut[S, Array[E]]
 
   type IORef[A]        = Ref[RW, A]
-  type IOMutable[A]    = Mutable[RW, A]
-  type IOArray[E]      = Mutable[RW, Array[E]]
+  type IOMutable[A]    = Mut[RW, A]
+  type IOArray[E]      = Mut[RW, Array[E]]
 
   type ForallST[A]     = Forall[ST[?, A]]
 }

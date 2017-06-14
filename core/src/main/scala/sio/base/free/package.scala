@@ -10,6 +10,7 @@ object `package` {
     def unit: T[Unit]
     def pure[A](a: A): T[A]
     def raise(e: Throwable): T[Nothing]
+    def delay[A](a: Any => A): T[A]
 
     def map[A, B](fa: T[A])(f: A => B): T[B]
     def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B]
@@ -138,6 +139,9 @@ object `package` {
     @inline final def pure[A](a: A): T[A] = Pure(a)
     @inline final def raise(e: Throwable): T[Nothing] =
       Map((_: Any) => throw e, null)
+    @inline final def delay[A](a: Any => A): T[Nothing] =
+      Map(a, null)
+
     @inline final def map[A, B](fa: T[A])(f: A => B): T[B] =
       Map(f.asInstanceOf[Any => Any], fa)
     @inline final def flatMap[A, B](fa: T[A])(f: A => T[B]): T[B] =

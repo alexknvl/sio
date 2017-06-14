@@ -42,7 +42,7 @@ object IO {
     */
   def trace(s: String): ST[RW, Unit] = IO { System.err.println(s) }
 
-  def mutable[A](a: A): IOMutable[A] = Mutable.wrap(a)
+  def mutable[A](a: A): IOMutable[A] = Mut.wrap(a)
 
   /**
     * This is the "back door" into the IO monad, allowing IO computation
