@@ -13,7 +13,7 @@ object Libraries {
   val commonsLang: List[ModuleID] = List("org.apache.commons"   %  "commons-lang3" % "3.5")
 
   val cats       : List[ModuleID] = List("org.typelevel"        %% "cats"       % "0.9.0")
-  val simulacrum : List[ModuleID] = List("com.github.mpilquist" %% "simulacrum" % "0.10.0")
+  val simulacrum : List[ModuleID] = List("com.github.mpilquist" %% "simulacrum" % "0.11.0")
   val shapeless  : List[ModuleID] = List("com.chuusai"          %% "shapeless"  % "2.3.2")
   val sourcecode : List[ModuleID] = List("com.lihaoyi"          %% "sourcecode" % "0.1.3")
   val eff        : List[ModuleID] = List("org.atnos"            %% "eff"        % "4.3.1")
@@ -21,13 +21,13 @@ object Libraries {
 
   val junicode   : List[ModuleID] = List("gcardone"             %  "junidecode" % "0.2")
 
-  val leibniz    : List[ModuleID] = List("com.alexknvl"         %% "leibniz"    % "0.3.2")
+  val leibniz    : List[ModuleID] = List("com.alexknvl"         %% "leibniz"    % "0.3.3")
   val newts      : List[ModuleID] = List("com.alexknvl"         %% "newtypes"   % "0.0.2")
 
   val iteratee : List[ModuleID] = List(
     "io.iteratee"  %%  "iteratee-core",
     "io.iteratee"  %%  "iteratee-files")
-    .map(_ % "0.11.0")
+    .map(_ % "0.12.0")
 
   val atto : List[ModuleID] = List(
     "org.tpolecat" %% "atto-core",

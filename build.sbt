@@ -2,7 +2,7 @@ lazy val commonSettings = List(
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
   addCompilerPlugin(Libraries.paradise),
   organization := "com.alexknvl",
-  version := "0.3.6",
+  version := "0.4.0",
   scalaVersion := "2.12.1",
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   scalacOptions ++= List(
